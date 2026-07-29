@@ -1,0 +1,164 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Mapping of a user to their registered studio tenant.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "studioId": { "type": "string" },
+        "role": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "studioId", "role"]
+    },
+    "Studio": {
+      "title": "Studio",
+      "description": "Top-level studio configuration and profile properties.",
+      "type": "object",
+      "properties": {
+        "profile": { "type": "object" },
+        "settings": { "type": "object" },
+        "invoiceCounter": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["profile"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Information about a customer registered in the system.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "address": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "phone"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "A studio photoshoot session or a printing press job booking.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "jobType": { "type": "string", "enum": ["studio_shoot", "printing_press"] },
+        "subType": { "type": "string" },
+        "description": { "type": "string" },
+        "bookingDate": { "type": "string", "format": "date" },
+        "deliveryDate": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["pending", "designing", "printing", "completed", "delivered", "cancelled"] },
+        "totalAmount": { "type": "number" },
+        "advancePaid": { "type": "number" },
+        "balanceDue": { "type": "number" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "customerId", "customerName", "jobType", "bookingDate", "deliveryDate", "status", "totalAmount"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "An invoice generated for a specific booking.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "bookingId": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "tax": { "type": "number" },
+        "grandTotal": { "type": "number" },
+        "paidAmount": { "type": "number" },
+        "paymentStatus": { "type": "string", "enum": ["unpaid", "partially_paid", "paid"] },
+        "paymentMethod": { "type": "string", "enum": ["cash", "upi", "card", "bank_transfer"] },
+        "invoiceDate": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "bookingId", "customerId", "invoiceNumber", "items", "subtotal", "grandTotal", "paymentStatus", "invoiceDate"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "A business expense record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "category": { "type": "string", "enum": ["rent", "electricity", "materials", "labor", "misc"] },
+        "description": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "category", "amount", "date"]
+    },
+    "Inventory": {
+      "title": "Inventory Item",
+      "description": "A physical stock item in the printing press or photo studio.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "itemName": { "type": "string" },
+        "quantity": { "type": "number" },
+        "minThreshold": { "type": "number" },
+        "unit": { "type": "string" },
+        "rate": { "type": "number", "description": "The rate or unit cost of the item" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "itemName", "quantity", "minThreshold", "unit"]
+    },
+    "StudioSettings": {
+      "title": "Studio Settings",
+      "description": "Tenant-specific settings and assets to bypass 1MB document limit.",
+      "type": "object",
+      "properties": {
+        "profile": { "type": "object" },
+        "settings": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["profile", "settings"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "Users and their associated tenant studio ID and roles."
+    },
+    "/studios/{studioId}": {
+      "schema": "Studio",
+      "description": "The master studio document with profile, settings, and stats."
+    },
+    "/studios/{studioId}/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Tenant-specific clients database"
+    },
+    "/studios/{studioId}/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Tenant-specific photoshoot sessions and jobs"
+    },
+    "/studios/{studioId}/invoices/{invoiceId}": {
+      "schema": "Invoice",
+      "description": "Tenant-specific invoices/bills"
+    },
+    "/studios/{studioId}/expenses/{expenseId}": {
+      "schema": "Expense",
+      "description": "Tenant-specific expenses logs"
+    },
+    "/studios/{studioId}/inventory/{itemId}": {
+      "schema": "Inventory",
+      "description": "Tenant-specific stock and inventory levels"
+    },
+    "/studios/{studioId}/settings/{settingsId}": {
+      "schema": "StudioSettings",
+      "description": "Tenant-specific settings containing heavy assets (images, signature, terms)"
+    }
+  }
+}

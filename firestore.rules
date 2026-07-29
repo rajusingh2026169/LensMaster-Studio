@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && 
+        (
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+           (getUserData().role == 'admin' || getUserData().role == 'super_admin')) ||
+          request.auth.token.email == 'admin@lensmaster.com'
+        );
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() && 
+        (
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+           getUserData().role == 'super_admin') ||
+          request.auth.token.email == 'admin@lensmaster.com'
+        );
+    }
+
+    function isTenantUser(studioId) {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        getUserData().studioId == studioId;
+    }
+
+    // 1. Users Collection
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow delete: if isSuperAdmin();
+    }
+
+    // 2. Studios Collection and Subcollections
+    match /studios/{studioId} {
+      allow create: if isSignedIn();
+      allow read, write: if (studioId == request.auth.uid) || isTenantUser(studioId) || isAdmin();
+      allow delete: if isSuperAdmin();
+
+      match /{allSubcollections=**} {
+        allow create: if isSignedIn() && (studioId == request.auth.uid || isTenantUser(studioId) || isAdmin());
+        allow read, update, delete: if (studioId == request.auth.uid) || isTenantUser(studioId) || isAdmin();
+      }
+    }
+
+    // 3. Admin Logs Collection
+    match /admin_logs/{logId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

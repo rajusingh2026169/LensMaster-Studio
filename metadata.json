@@ -1,0 +1,6 @@
+{
+  "name": "LensMaster Studio",
+  "description": "Professional Studio and Printing Press Management system with CRM, Order Booking, Invoice generator, Expenses tracker, and Analytics reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
