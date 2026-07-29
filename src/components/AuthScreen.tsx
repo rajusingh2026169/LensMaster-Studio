@@ -524,10 +524,19 @@ export default function AuthScreen({ onSuccess, onRegisterStatusChange, isAdminM
             {/* Header Area */}
             <div className="flex flex-col items-center mb-7">
               <div 
-                className="flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-lg bg-gradient-to-tr from-[#2563EB] to-[#3B82F6] shadow-blue-500/10"
+                className="flex h-20 w-20 items-center justify-center rounded-2xl overflow-hidden bg-black p-1 shadow-xl shadow-blue-900/20 border border-slate-800"
                 id="brand-logo-container"
               >
-                {isAdminMode ? <ShieldCheck className="h-8 w-8 stroke-[2.25]" /> : <Camera className="h-8 w-8 stroke-[2.25]" />}
+                {isAdminMode ? (
+                  <ShieldCheck className="h-10 w-10 text-blue-500 stroke-[2.25]" />
+                ) : (
+                  <img 
+                    src="/logo.jpg" 
+                    alt="LensMaster Studio Logo" 
+                    className="h-full w-full object-cover rounded-xl"
+                    referrerPolicy="no-referrer"
+                  />
+                )}
               </div>
               <h1 className="text-3xl font-black text-slate-900 text-center tracking-tight mt-5 leading-none font-sans">
                 {isAdminMode ? 'LensMaster Admin' : 'LensMaster Studio'}

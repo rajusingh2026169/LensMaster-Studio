@@ -1030,19 +1030,26 @@ export default function App() {
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row antialiased">
       {/* Mobile Top Header */}
       <div className="md:hidden flex items-center justify-between bg-white border-b border-gray-100 p-4 px-6 shrink-0 shadow-sm">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           {studioProfile?.studioLogo ? (
             <img 
               src={studioProfile.studioLogo} 
               alt="Logo" 
               referrerPolicy="no-referrer"
-              className="h-6 w-6 rounded-lg object-cover" 
+              className="h-8 w-8 rounded-lg object-cover" 
             />
           ) : (
-            <Camera className="h-6 w-6 text-[#2563EB]" />
+            <div className="h-8 w-8 rounded-lg overflow-hidden bg-black flex items-center justify-center p-0.5 border border-slate-800 shadow-sm">
+              <img 
+                src="/logo.jpg" 
+                alt="LensMaster Studio Logo" 
+                className="h-full w-full object-cover rounded" 
+                referrerPolicy="no-referrer"
+              />
+            </div>
           )}
           <span className="font-extrabold text-gray-900 tracking-tight text-base font-display">
-            {studioProfile?.businessName || studioProfile?.studioName || 'Studio'}
+            {studioProfile?.businessName || studioProfile?.studioName || 'LensMaster Studio'}
           </span>
         </div>
         <button 
@@ -1069,8 +1076,13 @@ export default function App() {
                 className="h-10 w-10 rounded-xl object-cover border border-slate-700/50 shadow-md" 
               />
             ) : (
-              <div className="rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#3B82F6] p-2.5 text-white shadow-md shadow-blue-500/20">
-                <Camera className="h-5 w-5" />
+              <div className="rounded-xl overflow-hidden bg-black border border-slate-800 h-10 w-10 flex items-center justify-center p-0.5 shadow-md shadow-blue-500/10">
+                <img 
+                  src="/logo.jpg" 
+                  alt="LensMaster Studio Logo" 
+                  className="h-full w-full object-cover rounded-lg"
+                  referrerPolicy="no-referrer"
+                />
               </div>
             )}
             <div>
