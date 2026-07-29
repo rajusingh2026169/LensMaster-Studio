@@ -64,5 +64,11 @@ service cloud.firestore {
     match /admin_logs/{logId} {
       allow read, write: if isAdmin();
     }
+
+    // 4. System Settings (Application Branding, App Logo)
+    match /system_settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }

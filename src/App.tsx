@@ -45,8 +45,10 @@ import {
   dbStudioServices,
   dbStudioPackages,
   tenantContext,
-  cleanUndefined
+  cleanUndefined,
+  dbSystemSettings
 } from './services/dbService';
+import defaultAppLogo from './assets/logo.jpg';
 
 // Component imports
 import Dashboard from './components/Dashboard';
@@ -117,6 +119,22 @@ export default function App() {
   const [preselectedCustomer, setPreselectedCustomer] = useState<Customer | null>(null);
   const [preselectedBooking, setPreselectedBooking] = useState<Booking | null>(null);
   const [preselectedInquiryForQuotation, setPreselectedInquiryForQuotation] = useState<Inquiry | null>(null);
+
+  // Application branding logo state
+  const [customAppLogo, setCustomAppLogo] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsub = dbSystemSettings.subscribeBranding((branding) => {
+      if (branding && branding.applicationLogo) {
+        setCustomAppLogo(branding.applicationLogo);
+      } else {
+        setCustomAppLogo(null);
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const activeAppLogo = customAppLogo || defaultAppLogo;
 
   // Auth Observer
   useEffect(() => {
@@ -944,10 +962,20 @@ export default function App() {
 
   if (authLoading || (user && !studioId && !isRegistering)) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-gray-50">
-        <div className="text-center space-y-3">
-          <Loader2 className="h-10 w-10 animate-spin text-blue-600 mx-auto" />
-          <p className="text-sm font-semibold text-gray-500">Initializing secure workspace...</p>
+      <div className="flex h-screen w-screen items-center justify-center bg-[#0a0f1d] font-sans">
+        <div className="text-center space-y-4 flex flex-col items-center">
+          <div className="flex items-center justify-center w-28 h-28 p-2 bg-black rounded-2xl border border-slate-800 shadow-2xl overflow-hidden shrink-0">
+            <img 
+              src={activeAppLogo} 
+              alt="LensMaster Application Logo" 
+              className="w-full h-full object-contain rounded-xl"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = defaultAppLogo;
+              }}
+            />
+          </div>
+          <Loader2 className="h-8 w-8 animate-spin text-[#2563EB] mx-auto mt-2" />
+          <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">Initializing secure workspace...</p>
         </div>
       </div>
     );
@@ -1030,26 +1058,19 @@ export default function App() {
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row antialiased">
       {/* Mobile Top Header */}
       <div className="md:hidden flex items-center justify-between bg-white border-b border-gray-100 p-4 px-6 shrink-0 shadow-sm">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           {studioProfile?.studioLogo ? (
             <img 
               src={studioProfile.studioLogo} 
               alt="Logo" 
               referrerPolicy="no-referrer"
-              className="h-8 w-8 rounded-lg object-cover" 
+              className="h-6 w-6 rounded-lg object-cover" 
             />
           ) : (
-            <div className="h-8 w-8 rounded-lg overflow-hidden bg-black flex items-center justify-center p-0.5 border border-slate-800 shadow-sm">
-              <img 
-                src="/logo.jpg" 
-                alt="LensMaster Studio Logo" 
-                className="h-full w-full object-cover rounded" 
-                referrerPolicy="no-referrer"
-              />
-            </div>
+            <Camera className="h-6 w-6 text-[#2563EB]" />
           )}
           <span className="font-extrabold text-gray-900 tracking-tight text-base font-display">
-            {studioProfile?.businessName || studioProfile?.studioName || 'LensMaster Studio'}
+            {studioProfile?.businessName || studioProfile?.studioName || 'Studio'}
           </span>
         </div>
         <button 
@@ -1076,13 +1097,8 @@ export default function App() {
                 className="h-10 w-10 rounded-xl object-cover border border-slate-700/50 shadow-md" 
               />
             ) : (
-              <div className="rounded-xl overflow-hidden bg-black border border-slate-800 h-10 w-10 flex items-center justify-center p-0.5 shadow-md shadow-blue-500/10">
-                <img 
-                  src="/logo.jpg" 
-                  alt="LensMaster Studio Logo" 
-                  className="h-full w-full object-cover rounded-lg"
-                  referrerPolicy="no-referrer"
-                />
+              <div className="rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#3B82F6] p-2.5 text-white shadow-md shadow-blue-500/20">
+                <Camera className="h-5 w-5" />
               </div>
             )}
             <div>

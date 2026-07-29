@@ -45,12 +45,6 @@ export default function Invoices({
   const [selectedInvoiceForPrint, setSelectedInvoiceForPrint] = useState<Invoice | null>(null);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
 
-  useEffect(() => {
-    if (!selectedInvoiceForPrint && invoices && invoices.length > 0) {
-      setSelectedInvoiceForPrint(invoices[0]);
-    }
-  }, [invoices, selectedInvoiceForPrint]);
-
   // Form State
   const [bookingId, setBookingId] = useState(preselectedBooking?.id || '');
   const [discount, setDiscount] = useState<number>(0);
@@ -756,12 +750,19 @@ export default function Invoices({
       {/* Invoice Detail modal preview and trigger download */}
       <AnimatePresence>
         {selectedInvoiceForPrint && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs cursor-pointer"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setSelectedInvoiceForPrint(null);
+              }
+            }}
+          >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-4xl overflow-y-auto max-h-[90vh] rounded-2xl border border-gray-100 bg-white p-6 shadow-xl"
+              className="w-full max-w-4xl overflow-y-auto max-h-[90vh] rounded-2xl border border-gray-100 bg-white p-6 shadow-xl cursor-default"
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-gray-100 pb-3">

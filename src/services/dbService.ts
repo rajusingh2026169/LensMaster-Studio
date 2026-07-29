@@ -2401,4 +2401,55 @@ export const dbStudioPackages = {
   }
 };
 
+// ==========================================
+// SYSTEM SETTINGS & BRANDING SERVICE
+// ==========================================
+
+export interface SystemBranding {
+  applicationLogo?: string;
+  updatedAt?: string;
+}
+
+export const dbSystemSettings = {
+  subscribeBranding: (callback: (branding: SystemBranding | null) => void) => {
+    const docRef = doc(db, 'system_settings', 'branding');
+    return onSnapshot(
+      docRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          callback(docSnap.data() as SystemBranding);
+        } else {
+          callback(null);
+        }
+      },
+      (err) => {
+        console.warn("System branding fetch warning:", err?.message || err);
+        callback(null);
+      }
+    );
+  },
+
+  getBranding: async (): Promise<SystemBranding | null> => {
+    try {
+      const docRef = doc(db, 'system_settings', 'branding');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data() as SystemBranding;
+      }
+    } catch (err) {
+      console.warn("Failed to get system branding:", err);
+    }
+    return null;
+  },
+
+  saveApplicationLogo: async (applicationLogo: string): Promise<void> => {
+    const docRef = doc(db, 'system_settings', 'branding');
+    await setDoc(docRef, cleanUndefined({
+      applicationLogo,
+      updatedAt: new Date().toISOString()
+    }), { merge: true });
+  }
+};
+
+
 

@@ -30,7 +30,8 @@ import {
   CalendarDays
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { dbAdmin } from '../services/dbService';
+import { dbAdmin, dbSystemSettings } from '../services/dbService';
+import defaultAppLogo from '../assets/logo.jpg';
 import { sendPasswordResetEmail, getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, firebaseConfig } from '../firebase';
 import { initializeApp, getApps } from 'firebase/app';
@@ -46,6 +47,21 @@ export default function AdminDashboard({ currentAdminRole, onSignOut }: AdminDas
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'studios' | 'users' | 'tools' | 'logs'>('studios');
+  
+  // Application logo branding state
+  const [appLogoInput, setAppLogoInput] = useState<string>('');
+  const [savingBranding, setSavingBranding] = useState<boolean>(false);
+
+  useEffect(() => {
+    const unsub = dbSystemSettings.subscribeBranding((b) => {
+      if (b?.applicationLogo) {
+        setAppLogoInput(b.applicationLogo);
+      } else {
+        setAppLogoInput('');
+      }
+    });
+    return () => unsub();
+  }, []);
   
   // Search and filter states
   const [studioSearch, setStudioSearch] = useState('');
@@ -850,6 +866,124 @@ export default function AdminDashboard({ currentAdminRole, onSignOut }: AdminDas
               {/* EMERGENCY & RECOVERY ACTIONS TAB */}
               {activeTab === 'tools' && (
                 <div className="space-y-6">
+                  {/* APPLICATION BRANDING & LOGO MANAGEMENT */}
+                  <div className="border border-blue-500/20 bg-blue-500/5 rounded-2xl p-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <p className="font-extrabold text-white text-base flex items-center gap-2">
+                          <Sparkles className="h-5 w-5 text-blue-400" />
+                          Global Application Branding & Login Logo
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          Upload or update the official application logo displayed on Login, Registration, OTP, Forgot Password, and App Loading screens.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center bg-[#070b13] p-4 rounded-xl border border-slate-800">
+                      {/* Logo Preview */}
+                      <div className="flex flex-col items-center justify-center p-3 bg-[#0c1222] border border-slate-800 rounded-xl">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Live Logo Preview</p>
+                        <div className="flex items-center justify-center max-w-[120px] max-h-[120px] p-2 bg-white rounded-xl shadow-md border border-slate-200">
+                          <img 
+                            src={appLogoInput || defaultAppLogo} 
+                            alt="Application Logo Preview" 
+                            className="max-w-[100px] max-h-[100px] w-auto h-auto object-contain rounded-lg"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = defaultAppLogo;
+                            }}
+                          />
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-semibold mt-2">
+                          {appLogoInput ? 'Custom System Logo' : 'Default Asset Logo'}
+                        </p>
+                      </div>
+
+                      {/* Input & Upload Controls */}
+                      <div className="md:col-span-3 space-y-3">
+                        <div>
+                          <label className="block text-slate-300 text-xs font-bold mb-1.5">
+                            Upload Logo Image (PNG, WebP, SVG, Max 120x120px recommended)
+                          </label>
+                          <div className="flex flex-wrap gap-2 items-center">
+                            <input 
+                              type="file" 
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  if (file.size > 2 * 1024 * 1024) {
+                                    setFormError("Logo file must be smaller than 2MB.");
+                                    return;
+                                  }
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    setAppLogoInput(reader.result as string);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                              className="text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
+                            />
+                            {appLogoInput && (
+                              <button
+                                type="button"
+                                onClick={() => setAppLogoInput('')}
+                                className="text-xs font-bold text-rose-400 hover:text-rose-300 px-3 py-1.5 rounded-lg border border-rose-500/20 hover:bg-rose-500/10 transition"
+                              >
+                                Reset to Default Logo
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-slate-400 text-[11px] font-semibold mb-1">
+                            Or enter direct image URL:
+                          </label>
+                          <input 
+                            type="text" 
+                            placeholder="https://example.com/logo.png"
+                            value={appLogoInput}
+                            onChange={(e) => setAppLogoInput(e.target.value)}
+                            className="w-full rounded-lg border border-slate-800 bg-[#0c1222] px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                          />
+                        </div>
+
+                        <div className="pt-1 flex justify-end">
+                          <button
+                            type="button"
+                            disabled={savingBranding}
+                            onClick={async () => {
+                              try {
+                                setSavingBranding(true);
+                                await dbSystemSettings.saveApplicationLogo(appLogoInput);
+                                setFormSuccess("Application branding logo saved successfully across all auth and loading screens!");
+                              } catch (err: any) {
+                                setFormError(`Failed to save logo: ${err.message}`);
+                              } finally {
+                                setSavingBranding(false);
+                              }
+                            }}
+                            className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-5 text-xs rounded-xl shadow-md transition flex items-center gap-1.5"
+                          >
+                            {savingBranding ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Saving Logo...
+                              </>
+                            ) : (
+                              <>
+                                <Save className="h-4 w-4" />
+                                Save Application Logo
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="border border-amber-500/20 bg-amber-500/5 rounded-2xl p-4 flex gap-3.5 items-start">
                     <ShieldAlert className="h-6 w-6 text-amber-500 mt-0.5 shrink-0" />
                     <div className="space-y-1">
