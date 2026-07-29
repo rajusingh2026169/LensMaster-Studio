@@ -962,20 +962,10 @@ export default function App() {
 
   if (authLoading || (user && !studioId && !isRegistering)) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#0a0f1d] font-sans">
-        <div className="text-center space-y-4 flex flex-col items-center">
-          <div className="flex items-center justify-center w-28 h-28 p-2 bg-black rounded-2xl border border-slate-800 shadow-2xl overflow-hidden shrink-0">
-            <img 
-              src={activeAppLogo} 
-              alt="LensMaster Application Logo" 
-              className="w-full h-full object-contain rounded-xl"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = defaultAppLogo;
-              }}
-            />
-          </div>
-          <Loader2 className="h-8 w-8 animate-spin text-[#2563EB] mx-auto mt-2" />
-          <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">Initializing secure workspace...</p>
+      <div className="flex h-screen w-screen items-center justify-center bg-gray-50">
+        <div className="text-center space-y-3">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-600 mx-auto" />
+          <p className="text-sm font-semibold text-gray-500">Initializing secure workspace...</p>
         </div>
       </div>
     );

@@ -539,21 +539,14 @@ export default function AuthScreen({ onSuccess, onRegisterStatusChange, isAdminM
             id="login-card"
           >
             {/* Header Area */}
-            <div className="flex flex-col items-center mb-6">
+            <div className="flex flex-col items-center mb-7">
               <div 
-                className="flex items-center justify-center w-28 h-28 p-2 bg-black rounded-2xl border border-slate-800 shadow-xl shadow-slate-900/30 mb-4 overflow-hidden shrink-0"
+                className="flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-lg bg-gradient-to-tr from-[#2563EB] to-[#3B82F6] shadow-blue-500/10"
                 id="brand-logo-container"
               >
-                <img 
-                  src={activeAppLogo} 
-                  alt="LensMaster Application Logo" 
-                  className="w-full h-full object-contain rounded-xl"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = defaultAppLogo;
-                  }}
-                />
+                {isAdminMode ? <ShieldCheck className="h-8 w-8 stroke-[2.25]" /> : <Camera className="h-8 w-8 stroke-[2.25]" />}
               </div>
-              <h1 className="text-3xl font-black text-slate-900 text-center tracking-tight leading-none font-sans">
+              <h1 className="text-3xl font-black text-slate-900 text-center tracking-tight mt-5 leading-none font-sans">
                 {isAdminMode ? 'LensMaster Admin' : 'LensMaster Studio'}
               </h1>
               <p className="text-slate-500 text-sm font-semibold text-center mt-2 flex items-center gap-1.5">
@@ -751,15 +744,8 @@ export default function AuthScreen({ onSuccess, onRegisterStatusChange, isAdminM
                 {registerStep === 'otp' ? 'Edit Studio Details' : 'Back to Login'}
               </button>
               
-              <div className="flex items-center justify-center w-24 h-24 p-2 bg-black rounded-2xl border border-slate-800 shadow-lg mb-2 overflow-hidden shrink-0">
-                <img 
-                  src={activeAppLogo} 
-                  alt="LensMaster Application Logo" 
-                  className="w-full h-full object-contain rounded-xl"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = defaultAppLogo;
-                  }}
-                />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#2563EB]/10 text-[#2563EB]">
+                <Sparkles className="h-7 w-7" />
               </div>
               <h1 className="text-2xl font-black text-slate-900 text-center tracking-tight mt-3 leading-none">
                 {registerStep === 'otp' ? 'Verify Mobile OTP' : 'Register Your Studio'}
@@ -1092,16 +1078,9 @@ export default function AuthScreen({ onSuccess, onRegisterStatusChange, isAdminM
             {registerStep === 'otp' && (
               <form onSubmit={handleVerifyOtpAndCreateStudio} className="space-y-5">
                 <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-center">
-                  <div className="flex justify-center mb-3">
-                    <div className="flex items-center justify-center w-20 h-20 p-1.5 bg-black rounded-2xl border border-slate-800 shadow-md overflow-hidden shrink-0">
-                      <img 
-                        src={activeAppLogo} 
-                        alt="LensMaster Application Logo" 
-                        className="w-full h-full object-contain rounded-xl"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = defaultAppLogo;
-                        }}
-                      />
+                  <div className="flex justify-center mb-2">
+                    <div className="h-12 w-12 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                      <Smartphone className="h-6 w-6" />
                     </div>
                   </div>
                   <h3 className="font-extrabold text-slate-900 text-sm mb-1">
@@ -1191,21 +1170,9 @@ export default function AuthScreen({ onSuccess, onRegisterStatusChange, isAdminM
 
             {/* STEP 3: Success Screen */}
             {registerStep === 'success' && (
-              <div className="py-6 text-center space-y-4">
-                <div className="flex flex-col items-center justify-center gap-3">
-                  <div className="flex items-center justify-center w-24 h-24 p-2 bg-black rounded-2xl border border-slate-800 shadow-md overflow-hidden shrink-0">
-                    <img 
-                      src={activeAppLogo} 
-                      alt="LensMaster Application Logo" 
-                      className="w-full h-full object-contain rounded-xl"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = defaultAppLogo;
-                      }}
-                    />
-                  </div>
-                  <div className="h-12 w-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shadow-sm">
-                    <CheckCircle2 className="h-7 w-7" />
-                  </div>
+              <div className="py-8 text-center space-y-4">
+                <div className="h-16 w-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="h-10 w-10" />
                 </div>
                 <h2 className="text-xl font-black text-slate-900">
                   Studio Provisioned Successfully!
@@ -1247,15 +1214,8 @@ export default function AuthScreen({ onSuccess, onRegisterStatusChange, isAdminM
                 Back to Login
               </button>
               
-              <div className="flex items-center justify-center w-28 h-28 p-2 bg-black rounded-2xl border border-slate-800 shadow-xl shadow-slate-900/30 mb-3 overflow-hidden shrink-0">
-                <img 
-                  src={activeAppLogo} 
-                  alt="LensMaster Application Logo" 
-                  className="w-full h-full object-contain rounded-xl"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = defaultAppLogo;
-                  }}
-                />
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-[#2563EB] mt-4">
+                <Lock className="h-8 w-8" />
               </div>
               <h1 className="text-2xl font-black text-slate-900 text-center tracking-tight leading-none">
                 Reset Password
