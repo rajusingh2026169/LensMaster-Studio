@@ -11,7 +11,14 @@ import {
   ChevronRight, 
   UserPlus, 
   Camera, 
-  Printer 
+  Printer,
+  Package,
+  Briefcase,
+  HelpCircle,
+  FileText,
+  BarChart3,
+  Users,
+  Warehouse
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -181,6 +188,96 @@ export default function Dashboard({
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <span className="text-xs font-semibold text-slate-500 tracking-wide uppercase">System Operational</span>
+        </div>
+      </div>
+
+      {/* Studio Services & Quick Action Hub (Mobile + Desktop friendly) */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-6 shadow-sm" id="services-launcher-hub">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+                <Package className="h-4.5 w-4.5" />
+              </span>
+              <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                Studio Services & Operations Hub (सेवाएं एवं टूल्स)
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Select any studio service or management tool below to get started
+            </p>
+          </div>
+          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 w-fit">
+            Quick Services
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <button
+            onClick={() => setActiveTab('services')}
+            className="group flex flex-col items-start p-3.5 rounded-xl bg-slate-50/80 hover:bg-blue-50/80 border border-slate-200/80 hover:border-blue-300 transition-all text-left shadow-2xs hover:shadow active:scale-98"
+          >
+            <div className="p-2.5 rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform mb-2">
+              <Package className="h-4.5 w-4.5" />
+            </div>
+            <span className="text-xs font-black text-slate-900 group-hover:text-blue-700">Services & Rates</span>
+            <span className="text-[10px] text-slate-500 font-semibold mt-0.5">Rate card & packages</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('bookings')}
+            className="group flex flex-col items-start p-3.5 rounded-xl bg-slate-50/80 hover:bg-purple-50/80 border border-slate-200/80 hover:border-purple-300 transition-all text-left shadow-2xs hover:shadow active:scale-98"
+          >
+            <div className="p-2.5 rounded-xl bg-purple-600 text-white shadow-sm shadow-purple-500/20 group-hover:scale-105 transition-transform mb-2">
+              <Camera className="h-4.5 w-4.5" />
+            </div>
+            <span className="text-xs font-black text-slate-900 group-hover:text-purple-700">Bookings / Shoots</span>
+            <span className="text-[10px] text-slate-500 font-semibold mt-0.5">Photo & event bookings</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('orders')}
+            className="group flex flex-col items-start p-3.5 rounded-xl bg-slate-50/80 hover:bg-indigo-50/80 border border-slate-200/80 hover:border-indigo-300 transition-all text-left shadow-2xs hover:shadow active:scale-98"
+          >
+            <div className="p-2.5 rounded-xl bg-indigo-600 text-white shadow-sm shadow-indigo-500/20 group-hover:scale-105 transition-transform mb-2">
+              <Briefcase className="h-4.5 w-4.5" />
+            </div>
+            <span className="text-xs font-black text-slate-900 group-hover:text-indigo-700">Printing Orders</span>
+            <span className="text-[10px] text-slate-500 font-semibold mt-0.5">Albums, flex & framing</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('enquiry')}
+            className="group flex flex-col items-start p-3.5 rounded-xl bg-slate-50/80 hover:bg-amber-50/80 border border-slate-200/80 hover:border-amber-300 transition-all text-left shadow-2xs hover:shadow active:scale-98"
+          >
+            <div className="p-2.5 rounded-xl bg-amber-500 text-white shadow-sm shadow-amber-500/20 group-hover:scale-105 transition-transform mb-2">
+              <HelpCircle className="h-4.5 w-4.5" />
+            </div>
+            <span className="text-xs font-black text-slate-900 group-hover:text-amber-700">Enquiry & Quotes</span>
+            <span className="text-[10px] text-slate-500 font-semibold mt-0.5">Lead follow-up</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('invoice')}
+            className="group flex flex-col items-start p-3.5 rounded-xl bg-slate-50/80 hover:bg-emerald-50/80 border border-slate-200/80 hover:border-emerald-300 transition-all text-left shadow-2xs hover:shadow active:scale-98"
+          >
+            <div className="p-2.5 rounded-xl bg-emerald-600 text-white shadow-sm shadow-emerald-500/20 group-hover:scale-105 transition-transform mb-2">
+              <FileText className="h-4.5 w-4.5" />
+            </div>
+            <span className="text-xs font-black text-slate-900 group-hover:text-emerald-700">Billing / Invoice</span>
+            <span className="text-[10px] text-slate-500 font-semibold mt-0.5">GST bills & payments</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('reports')}
+            className="group flex flex-col items-start p-3.5 rounded-xl bg-slate-50/80 hover:bg-rose-50/80 border border-slate-200/80 hover:border-rose-300 transition-all text-left shadow-2xs hover:shadow active:scale-98"
+          >
+            <div className="p-2.5 rounded-xl bg-rose-600 text-white shadow-sm shadow-rose-500/20 group-hover:scale-105 transition-transform mb-2">
+              <BarChart3 className="h-4.5 w-4.5" />
+            </div>
+            <span className="text-xs font-black text-slate-900 group-hover:text-rose-700">Reports Suite</span>
+            <span className="text-[10px] text-slate-500 font-semibold mt-0.5">Sales & profit analytics</span>
+          </button>
         </div>
       </div>
 

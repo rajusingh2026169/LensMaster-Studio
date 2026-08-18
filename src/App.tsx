@@ -23,7 +23,13 @@ import {
   Send,
   Briefcase,
   AlertCircle,
-  Layers
+  Layers,
+  LayoutDashboard,
+  Package,
+  BarChart3,
+  Plus,
+  Boxes,
+  Grid
 } from 'lucide-react';
 
 import { auth, signInWithGoogle, db, isConfigValid } from './firebase';
@@ -1040,6 +1046,53 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row antialiased">
+      {/* Mobile Top Header Navigation */}
+      <header className="md:hidden sticky top-0 z-30 bg-[#0B1120] text-white border-b border-slate-800/80 px-4 py-3 flex items-center justify-between shadow-md">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-2 rounded-xl bg-slate-800/90 text-white hover:bg-blue-600 active:scale-95 transition shadow-sm"
+            aria-label="Open Navigation Menu"
+          >
+            <Menu className="h-5 w-5 text-blue-400" />
+          </button>
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-blue-600 to-blue-400 p-0.5 flex items-center justify-center shrink-0 shadow overflow-hidden">
+              <img
+                src={studioProfile?.studioLogo || defaultAppLogo}
+                alt="Logo"
+                referrerPolicy="no-referrer"
+                className="h-full w-full rounded-[6px] object-cover bg-black"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = defaultAppLogo;
+                }}
+              />
+            </div>
+            <div>
+              <h2 className="font-black text-white text-xs sm:text-sm tracking-tight truncate max-w-[150px] sm:max-w-[200px]">
+                {studioProfile?.businessName || studioProfile?.studioName || 'Vikas Studio'}
+              </h2>
+              <p className="text-[10px] text-blue-400 font-bold capitalize">
+                {activeTab.replace('_', ' ')}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setActiveTab('services');
+              setActiveSubSection('');
+            }}
+            className="px-2.5 py-1 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-300 text-[11px] font-bold flex items-center gap-1 active:scale-95 transition"
+          >
+            <Package className="h-3.5 w-3.5 text-blue-400" />
+            <span>Services</span>
+          </button>
+        </div>
+      </header>
+
       {/* Sidebar Navigation */}
       <SidebarMenu
         activeSection={activeTab}
@@ -1048,10 +1101,12 @@ export default function App() {
         studioProfile={studioProfile}
         userEmail={user.email}
         onSignOut={handleSignOut}
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
       />
 
       {/* Main Workspace Frame container */}
-      <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10 max-w-7xl mx-auto w-full overflow-y-auto min-w-0">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10 max-w-7xl mx-auto w-full overflow-y-auto min-w-0 pb-24 md:pb-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={`${activeTab}-${activeSubSection}`}
@@ -1299,6 +1354,77 @@ export default function App() {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#0B1120]/95 backdrop-blur-xl border-t border-slate-800/90 px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom">
+        <button
+          onClick={() => handleSelectSection('dashboard')}
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
+            activeTab === 'dashboard'
+              ? 'text-blue-400 bg-blue-500/15'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <LayoutDashboard className={`h-5 w-5 mb-0.5 ${activeTab === 'dashboard' ? 'text-blue-400 scale-105' : 'text-slate-400'}`} />
+          <span>Home</span>
+        </button>
+
+        <button
+          onClick={() => handleSelectSection('services')}
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
+            activeTab === 'services' || activeTab === 'service_groups'
+              ? 'text-blue-400 bg-blue-500/15'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Package className={`h-5 w-5 mb-0.5 ${activeTab === 'services' || activeTab === 'service_groups' ? 'text-blue-400 scale-105' : 'text-slate-400'}`} />
+          <span>Services</span>
+        </button>
+
+        <button
+          onClick={() => handleSelectSection('enquiry')}
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
+            activeTab === 'enquiry'
+              ? 'text-blue-400 bg-blue-500/15'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <HelpCircle className={`h-5 w-5 mb-0.5 ${activeTab === 'enquiry' ? 'text-blue-400 scale-105' : 'text-slate-400'}`} />
+          <span>Enquiry</span>
+        </button>
+
+        <button
+          onClick={() => handleSelectSection('orders')}
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
+            activeTab === 'orders' || activeTab === 'bookings'
+              ? 'text-blue-400 bg-blue-500/15'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Briefcase className={`h-5 w-5 mb-0.5 ${activeTab === 'orders' || activeTab === 'bookings' ? 'text-blue-400 scale-105' : 'text-slate-400'}`} />
+          <span>Orders</span>
+        </button>
+
+        <button
+          onClick={() => handleSelectSection('invoice')}
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
+            activeTab === 'invoice' || activeTab === 'invoices'
+              ? 'text-blue-400 bg-blue-500/15'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <FileText className={`h-5 w-5 mb-0.5 ${activeTab === 'invoice' || activeTab === 'invoices' ? 'text-blue-400 scale-105' : 'text-slate-400'}`} />
+          <span>Invoice</span>
+        </button>
+
+        <button
+          onClick={() => setMobileMenuOpen(true)}
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-[10px] font-bold text-slate-400 hover:text-white transition-all`}
+        >
+          <Menu className="h-5 w-5 mb-0.5 text-slate-400" />
+          <span>Menu</span>
+        </button>
+      </nav>
     </div>
   );
 }

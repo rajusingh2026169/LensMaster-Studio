@@ -220,6 +220,9 @@ export default function SidebarMenu({
       [mainTab]: true
     }));
     handleSelect(mainTab, subSection || '');
+    if (setMobileMenuOpen) {
+      setMobileMenuOpen(false);
+    }
   };
 
   return (
@@ -227,7 +230,7 @@ export default function SidebarMenu({
       {/* Overlay for mobile drawer */}
       {mobileMenuOpen && (
         <div
-          onClick={() => setMobileMenuOpen(false)}
+          onClick={() => setMobileMenuOpen && setMobileMenuOpen(false)}
           className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm md:hidden transition-opacity"
         />
       )}
