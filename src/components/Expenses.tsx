@@ -22,11 +22,12 @@ import { useToast } from './Toast';
 interface ExpensesProps {
   expenses: Expense[];
   inventory: InventoryItem[];
+  initialSubTab?: 'ledger' | 'stock';
 }
 
-export default function Expenses({ expenses, inventory }: ExpensesProps) {
+export default function Expenses({ expenses, inventory, initialSubTab = 'ledger' }: ExpensesProps) {
   const { showSuccess, showError } = useToast();
-  const [subTab, setSubTab] = useState<'ledger' | 'stock'>('ledger');
+  const [subTab, setSubTab] = useState<'ledger' | 'stock'>(initialSubTab);
   
   // Expense Ledger State
   const [searchQuery, setSearchQuery] = useState('');

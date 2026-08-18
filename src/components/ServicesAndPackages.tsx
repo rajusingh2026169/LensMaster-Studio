@@ -38,6 +38,8 @@ interface ServicesAndPackagesProps {
   categories: ServiceCategory[];
   packages: StudioPackage[];
   studioProfile?: any;
+  initialSubTab?: 'services' | 'packages' | 'categories';
+  activeSubSection?: string;
 }
 
 export default function ServicesAndPackages({
@@ -45,8 +47,35 @@ export default function ServicesAndPackages({
   categories,
   packages,
   studioProfile,
+  initialSubTab = 'services',
+  activeSubSection,
 }: ServicesAndPackagesProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'services' | 'packages' | 'categories'>('services');
+  const [activeSubTab, setActiveSubTab] = useState<'services' | 'packages' | 'categories'>(initialSubTab);
+
+  React.useEffect(() => {
+    if (initialSubTab) {
+      setActiveSubTab(initialSubTab);
+    }
+  }, [initialSubTab]);
+
+  React.useEffect(() => {
+    if (!activeSubSection) return;
+    if (activeSubSection === 'add_group') {
+      setActiveSubTab('categories');
+      setIsCategoryModalOpen(true);
+    } else if (activeSubSection === 'add_service') {
+      setActiveSubTab('services');
+      setIsServiceModalOpen(true);
+    } else if (activeSubSection === 'package_pricing') {
+      setActiveSubTab('packages');
+    } else if (activeSubSection.startsWith('group_')) {
+      setActiveSubTab('services');
+      const catId = activeSubSection.replace('group_', '');
+      setSelectedCategory(catId);
+    } else if (activeSubSection === 'examples_group' || activeSubSection === 'all_groups') {
+      setActiveSubTab('categories');
+    }
+  }, [activeSubSection]);
 
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
@@ -440,6 +469,32 @@ export default function ServicesAndPackages({
       } catch (err: any) {
         alert('Error deleting category: ' + err.message);
       }
+    }
+  };
+
+  const handleSeedExampleGroups = async () => {
+    const defaultGroups = [
+      { name: 'Photography', description: 'Wedding, Pre-Wedding, Engagement, Birthday shoots', displayOrder: 1 },
+      { name: 'Videography', description: 'Cinematography, 4K video shoots, drone coverage', displayOrder: 2 },
+      { name: 'Printing Press', description: 'Flex Printing, Banner, Mug Printing, Photo Printing', displayOrder: 3 },
+      { name: 'Editing', description: 'Photo retouching, video highlights, color grading', displayOrder: 4 },
+      { name: 'Album', description: 'Premium Karizma album design, flush mount albums', displayOrder: 5 },
+      { name: 'Frame', description: 'Custom wooden & synthetic frames, canvas prints', displayOrder: 6 },
+      { name: 'Rental', description: 'Camera body, prime lenses, LED lights, gimbal rentals', displayOrder: 7 },
+    ];
+
+    try {
+      for (const grp of defaultGroups) {
+        const exists = categories.some(
+          (c) => c.name.toLowerCase() === grp.name.toLowerCase()
+        );
+        if (!exists) {
+          await dbServiceCategories.add(grp);
+        }
+      }
+      alert('Default Service Groups (Photography, Videography, Printing Press, Editing, Album, Frame, Rental) created successfully!');
+    } catch (err: any) {
+      alert('Error seeding default groups: ' + err.message);
     }
   };
 
@@ -982,14 +1037,28 @@ export default function ServicesAndPackages({
       {/* SUB-TAB 3: SERVICE CATEGORIES */}
       {activeSubTab === 'categories' && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-black text-slate-900">Custom Service Categories</h2>
-            <button
-              onClick={openNewCategoryModal}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white font-bold text-xs rounded-xl shadow"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add Category
-            </button>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-black text-slate-900">Custom Service Categories (Service Groups)</h2>
+              <p className="text-xs text-slate-500 font-semibold">
+                Manage Photography, Videography, Printing Press, Editing, Album, Frame, and Rental groups.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSeedExampleGroups}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition"
+              >
+                <RefreshCw className="h-3.5 w-3.5 text-blue-600" />
+                Seed Example Groups
+              </button>
+              <button
+                onClick={openNewCategoryModal}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow transition"
+              >
+                <Plus className="h-3.5 w-3.5" /> Add Service Group
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

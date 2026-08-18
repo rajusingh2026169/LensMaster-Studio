@@ -66,6 +66,9 @@ import TeamsAndEmployees from './components/TeamsAndEmployees';
 import EmployeeManagement from './components/EmployeeManagement';
 import CalendarView from './components/CalendarView';
 import ServicesAndPackages from './components/ServicesAndPackages';
+import SidebarMenu from './components/SidebarMenu';
+import ReportsSuite from './components/ReportsSuite';
+import OrdersSuite from './components/OrdersSuite';
 
 export default function App() {
   // Auth States
@@ -96,6 +99,7 @@ export default function App() {
 
   // Tab State
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeSubSection, setActiveSubSection] = useState<string>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Firestore DB States
@@ -1028,189 +1032,197 @@ export default function App() {
     );
   }
 
-  // Logged in -> Render Main Workspace Sidebar frame
-  const navigationItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Sparkles },
-    { id: 'services', label: 'Services & Packages', icon: Layers },
-    { id: 'employee_management', label: 'Employee Management', icon: UserCheck },
-    { id: 'inquiries', label: 'Inquiries & Leads', icon: HelpCircle },
-    { id: 'quotations', label: 'Quotation Builder', icon: Send },
-    { id: 'work_orders', label: 'Work Orders', icon: Briefcase },
-    { id: 'customers', label: 'CRM Clients', icon: Users },
-    { id: 'bookings', label: 'Bookings & Jobs', icon: Calendar },
-    { id: 'calendar', label: 'Event Calendar', icon: Calendar },
-    { id: 'invoices', label: 'Invoices & Bills', icon: FileText },
-    { id: 'expenses', label: 'Expenses Register', icon: DollarSign },
-    { id: 'settings', label: 'Business Settings', icon: Settings },
-  ];
+  // Handle sidebar navigation selection
+  const handleSelectSection = (sectionId: string, subSectionId?: string) => {
+    setActiveTab(sectionId);
+    setActiveSubSection(subSectionId || '');
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row antialiased">
-      {/* Mobile Top Header */}
-      <div className="md:hidden flex items-center justify-between bg-white border-b border-gray-100 p-4 px-6 shrink-0 shadow-sm">
-        <div className="flex items-center gap-2">
-          {studioProfile?.studioLogo ? (
-            <img 
-              src={studioProfile.studioLogo} 
-              alt="Logo" 
-              referrerPolicy="no-referrer"
-              className="h-6 w-6 rounded-lg object-cover" 
-            />
-          ) : (
-            <Camera className="h-6 w-6 text-[#2563EB]" />
-          )}
-          <span className="font-extrabold text-gray-900 tracking-tight text-base font-display">
-            {studioProfile?.businessName || studioProfile?.studioName || 'Studio'}
-          </span>
-        </div>
-        <button 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="text-gray-500 hover:text-gray-800 p-1 bg-gray-50 rounded-lg"
-        >
-          {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
-      </div>
-
-      {/* Main Navigation Sidebar Drawer */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-[#0F172A] border-r border-slate-800/60 p-6 flex flex-col justify-between shrink-0 transform transition-transform duration-300 md:translate-x-0 md:static
-        ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        {/* Upper brand */}
-        <div className="space-y-8">
-          <div className="flex items-center gap-3">
-            {studioProfile?.studioLogo ? (
-              <img 
-                src={studioProfile.studioLogo} 
-                alt="Logo" 
-                referrerPolicy="no-referrer"
-                className="h-10 w-10 rounded-xl object-cover border border-slate-700/50 shadow-md" 
-              />
-            ) : (
-              <div className="rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#3B82F6] p-2.5 text-white shadow-md shadow-blue-500/20">
-                <Camera className="h-5 w-5" />
-              </div>
-            )}
-            <div>
-              <h2 className="font-bold text-white tracking-tight text-sm font-display leading-tight truncate max-w-[140px]">
-                {studioProfile?.businessName || studioProfile?.studioName || 'LensMaster'}
-              </h2>
-              <span className="inline-block px-1.5 py-0.5 bg-blue-500/10 text-[#3B82F6] text-[9px] font-bold uppercase tracking-wider rounded mt-0.5">
-                Studio Suite
-              </span>
-            </div>
-          </div>
-
-          {/* Links list */}
-          <nav className="space-y-1.5">
-            {navigationItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveTab(item.id);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`
-                    w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-[14px] font-medium transition-all duration-150 group
-                    ${isActive 
-                      ? 'bg-[#2563EB] text-white font-semibold shadow-lg shadow-blue-600/25' 
-                      : 'text-slate-400 hover:bg-slate-800/60 hover:text-white'}
-                  `}
-                >
-                  <Icon className={`h-5 w-5 shrink-0 transition-transform duration-150 group-hover:scale-105 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'}`} />
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* User profile footer */}
-        <div className="border-t border-slate-800/80 pt-5 space-y-4">
-          <div className="flex items-center gap-3">
-            {studioProfile?.studioLogo ? (
-              <img 
-                src={studioProfile.studioLogo} 
-                alt="Avatar" 
-                referrerPolicy="no-referrer"
-                className="h-10 w-10 rounded-full object-cover border border-slate-700" 
-              />
-            ) : (
-              <div className="h-10 w-10 rounded-full bg-slate-800 text-slate-200 border border-slate-700 flex items-center justify-center font-bold text-xs">
-                {(studioProfile?.ownerName || user.email || 'O').charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-white truncate">
-                {studioProfile?.ownerName || 'Studio Owner'}
-              </p>
-              <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                {studioProfile?.email || user.email}
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={handleSignOut}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-800/40 border border-slate-800 py-2.5 text-xs font-bold text-rose-400 hover:bg-rose-500 hover:text-white transition-all duration-150"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign Out
-          </button>
-        </div>
-      </aside>
+      {/* Sidebar Navigation */}
+      <SidebarMenu
+        activeSection={activeTab}
+        activeSubSection={activeSubSection}
+        onSelectSection={handleSelectSection}
+        studioProfile={studioProfile}
+        userEmail={user.email}
+        onSignOut={handleSignOut}
+      />
 
       {/* Main Workspace Frame container */}
-      <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10 max-w-7xl mx-auto w-full overflow-y-auto">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10 max-w-7xl mx-auto w-full overflow-y-auto min-w-0">
         <AnimatePresence mode="wait">
           <motion.div
-            key={activeTab}
+            key={`${activeTab}-${activeSubSection}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
           >
+            {/* 1. DASHBOARD MODULE */}
             {activeTab === 'dashboard' && (
-              <Dashboard
-                customers={customers}
-                bookings={bookings}
-                invoices={invoices}
-                expenses={expenses}
-                inventory={inventory}
-                inquiries={inquiries}
-                quotations={quotations}
-                teams={teams}
-                employees={employees}
-                setActiveTab={setActiveTab}
-                studioName={studioProfile?.businessName || studioProfile?.studioName || 'Studio'}
-                onQuickBooking={() => {
-                  setPreselectedCustomer(null);
-                  setActiveTab('bookings');
-                }}
-                onQuickCustomer={() => {
-                  setActiveTab('customers');
-                }}
+              activeSubSection === 'calendar' ? (
+                <CalendarView
+                  bookings={bookings}
+                  teams={teams}
+                  employees={employees}
+                  calendarItems={calendarItems}
+                />
+              ) : (
+                <Dashboard
+                  customers={customers}
+                  bookings={bookings}
+                  invoices={invoices}
+                  expenses={expenses}
+                  inventory={inventory}
+                  inquiries={inquiries}
+                  quotations={quotations}
+                  teams={teams}
+                  employees={employees}
+                  setActiveTab={setActiveTab}
+                  studioName={studioProfile?.businessName || studioProfile?.studioName || 'Studio'}
+                  onQuickBooking={() => {
+                    setPreselectedCustomer(null);
+                    setActiveTab('bookings');
+                  }}
+                  onQuickCustomer={() => {
+                    setActiveTab('customers');
+                  }}
+                />
+              )
+            )}
+
+            {/* 2. SERVICE GROUP MODULE */}
+            {activeTab === 'service_groups' && (
+              <ServicesAndPackages
+                services={studioServices}
+                categories={serviceCategories}
+                packages={studioPackages}
+                studioProfile={studioProfile}
+                initialSubTab="categories"
+                activeSubSection={activeSubSection}
               />
             )}
 
+            {/* 3. SERVICES MODULE */}
             {activeTab === 'services' && (
               <ServicesAndPackages
                 services={studioServices}
                 categories={serviceCategories}
                 packages={studioPackages}
                 studioProfile={studioProfile}
+                initialSubTab={activeSubSection === 'package_pricing' ? 'packages' : 'services'}
+                activeSubSection={activeSubSection}
               />
             )}
 
-            {activeTab === 'employee_management' && (
+            {/* 4. ENQUIRY MODULE */}
+            {activeTab === 'enquiry' && (
+              activeSubSection === 'quotation' ? (
+                <Quotations
+                  quotations={quotations}
+                  customers={customers}
+                  inquiries={inquiries}
+                  studioServices={studioServices}
+                  studioPackages={studioPackages}
+                  studioProfile={studioProfile}
+                  preselectedInquiry={preselectedInquiryForQuotation}
+                  onBookingConverted={() => setActiveTab('bookings')}
+                />
+              ) : (
+                <Inquiries
+                  inquiries={inquiries}
+                  onCreateQuotationFromInquiry={(inq) => {
+                    setPreselectedInquiryForQuotation(inq);
+                    setActiveTab('quotations');
+                  }}
+                />
+              )
+            )}
+
+            {/* 5. ORDERS MODULE */}
+            {activeTab === 'orders' && (
+              <OrdersSuite
+                bookings={bookings}
+                orders={orders}
+                customers={customers}
+                teams={teams}
+                employees={employees}
+                activeSubSection={activeSubSection}
+                onNewBooking={() => {
+                  setPreselectedCustomer(null);
+                  setActiveTab('bookings');
+                }}
+                onOpenWorkOrder={(wo) => {
+                  setActiveTab('work_orders');
+                }}
+              />
+            )}
+
+            {/* 6. INVOICE MODULE */}
+            {(activeTab === 'invoice' || activeTab === 'invoices') && (
+              <Invoices
+                invoices={invoices}
+                bookings={bookings}
+                customers={customers}
+                preselectedBooking={preselectedBooking}
+                clearPreselectedBooking={() => setPreselectedBooking(null)}
+                studioProfile={studioProfile}
+                studioSettings={studioSettings}
+              />
+            )}
+
+            {/* 7. REPORTS MODULE */}
+            {activeTab === 'reports' && (
+              <ReportsSuite
+                invoices={invoices}
+                expenses={expenses}
+                bookings={bookings}
+                customers={customers}
+                employees={employees}
+                inventory={inventory}
+                activeSubSection={activeSubSection}
+              />
+            )}
+
+            {/* 8. SETTINGS MODULE */}
+            {activeTab === 'settings' && (
+              <BusinessSettings
+                studioId={studioId || ''}
+                studioProfile={studioProfile}
+                studioSettings={studioSettings}
+              />
+            )}
+
+            {/* EMPLOYEES MODULE */}
+            {(activeTab === 'employees' || activeTab === 'employee_management') && (
               <EmployeeManagement
                 employees={employees}
                 bookings={bookings}
                 workOrders={orders}
                 userRole={adminRole || 'owner'}
+              />
+            )}
+
+            {/* INVENTORY MODULE */}
+            {activeTab === 'inventory' && (
+              <Expenses
+                expenses={expenses}
+                inventory={inventory}
+                initialSubTab="stock"
+              />
+            )}
+
+            {/* PRODUCT STORE MODULE */}
+            {activeTab === 'store' && (
+              <ServicesAndPackages
+                services={studioServices}
+                categories={serviceCategories}
+                packages={studioPackages}
+                studioProfile={studioProfile}
+                initialSubTab="packages"
+                activeSubSection={activeSubSection}
               />
             )}
 
@@ -1278,30 +1290,10 @@ export default function App() {
               />
             )}
 
-            {activeTab === 'invoices' && (
-              <Invoices
-                invoices={invoices}
-                bookings={bookings}
-                customers={customers}
-                preselectedBooking={preselectedBooking}
-                clearPreselectedBooking={() => setPreselectedBooking(null)}
-                studioProfile={studioProfile}
-                studioSettings={studioSettings}
-              />
-            )}
-
             {activeTab === 'expenses' && (
               <Expenses
                 expenses={expenses}
                 inventory={inventory}
-              />
-            )}
-
-            {activeTab === 'settings' && (
-              <BusinessSettings
-                studioId={studioId || ''}
-                studioProfile={studioProfile}
-                studioSettings={studioSettings}
               />
             )}
           </motion.div>
