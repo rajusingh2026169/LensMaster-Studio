@@ -29,7 +29,8 @@ import {
   BarChart3,
   Plus,
   Boxes,
-  Grid
+  Grid,
+  Search
 } from 'lucide-react';
 
 import { auth, signInWithGoogle, db, isConfigValid } from './firebase';
@@ -1045,68 +1046,76 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row antialiased">
-      {/* Mobile Top Header Navigation */}
-      <header className="md:hidden sticky top-0 z-30 bg-[#0B1120] text-white border-b border-slate-800/80 px-4 py-3 flex items-center justify-between shadow-md">
+    <div className="min-h-screen bg-[#eef0f8] flex flex-col antialiased text-slate-800">
+      {/* Top Global Header spanning full width */}
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-200/90 px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="p-2 rounded-xl bg-slate-800/90 text-white hover:bg-blue-600 active:scale-95 transition shadow-sm"
-            aria-label="Open Navigation Menu"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-1.5 rounded-md text-slate-600 hover:bg-gray-100 transition"
+            aria-label="Toggle Navigation"
           >
-            <Menu className="h-5 w-5 text-blue-400" />
+            <Menu className="h-5 w-5" />
           </button>
+
+          {/* Logo and Studio Branding */}
           <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-blue-600 to-blue-400 p-0.5 flex items-center justify-center shrink-0 shadow overflow-hidden">
+            <div className="h-8 w-8 rounded-full overflow-hidden bg-slate-900 flex items-center justify-center shrink-0 border border-gray-200 shadow-xs">
               <img
                 src={studioProfile?.studioLogo || defaultAppLogo}
                 alt="Logo"
                 referrerPolicy="no-referrer"
-                className="h-full w-full rounded-[6px] object-cover bg-black"
+                className="h-full w-full object-cover"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = defaultAppLogo;
                 }}
               />
             </div>
-            <div>
-              <h2 className="font-black text-white text-xs sm:text-sm tracking-tight truncate max-w-[150px] sm:max-w-[200px]">
-                {studioProfile?.businessName || studioProfile?.studioName || 'Vikas Studio'}
-              </h2>
-              <p className="text-[10px] text-blue-400 font-bold capitalize">
-                {activeTab.replace('_', ' ')}
-              </p>
+            <div className="leading-tight">
+              <h1 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
+                {studioProfile?.businessName || studioProfile?.studioName || 'Dazz'}
+                <span className="text-xs font-normal text-slate-500 hidden sm:inline">Photography</span>
+              </h1>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => {
-              setActiveTab('services');
-              setActiveSubSection('');
-            }}
-            className="px-2.5 py-1 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-300 text-[11px] font-bold flex items-center gap-1 active:scale-95 transition"
-          >
-            <Package className="h-3.5 w-3.5 text-blue-400" />
-            <span>Services</span>
-          </button>
+        {/* Right Search and User Profile */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="relative hidden sm:block w-48 lg:w-64">
+            <input
+              type="text"
+              placeholder="Search.."
+              className="w-full bg-[#f4f6fa] border border-gray-200 text-xs rounded px-3 py-1.5 pl-8 focus:outline-none focus:border-indigo-500 focus:bg-white transition"
+            />
+            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
+          </div>
+
+          {/* User Profile Avatar */}
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-[#3f51b5] text-white flex items-center justify-center text-xs font-bold shadow-xs">
+              {(studioProfile?.ownerName || user.email || 'U').charAt(0).toUpperCase()}
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* Sidebar Navigation */}
-      <SidebarMenu
-        activeSection={activeTab}
-        activeSubSection={activeSubSection}
-        onSelectSection={handleSelectSection}
-        studioProfile={studioProfile}
-        userEmail={user.email}
-        onSignOut={handleSignOut}
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-      />
+      {/* Main Container with Sidebar + Content */}
+      <div className="flex-1 flex flex-row overflow-hidden min-h-[calc(100vh-53px)]">
+        {/* Sidebar Navigation */}
+        <SidebarMenu
+          activeSection={activeTab}
+          activeSubSection={activeSubSection}
+          onSelectSection={handleSelectSection}
+          studioProfile={studioProfile}
+          userEmail={user.email}
+          onSignOut={handleSignOut}
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+        />
 
-      {/* Main Workspace Frame container */}
-      <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10 max-w-7xl mx-auto w-full overflow-y-auto min-w-0 pb-24 md:pb-10">
+        {/* Main Workspace Frame container */}
+        <main className="flex-1 p-4 sm:p-6 max-w-7xl mx-auto w-full overflow-y-auto min-w-0 pb-20 md:pb-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={`${activeTab}-${activeSubSection}`}
@@ -1354,9 +1363,10 @@ export default function App() {
           </motion.div>
         </AnimatePresence>
       </main>
+    </div>
 
       {/* Mobile Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#0B1120]/95 backdrop-blur-xl border-t border-slate-800/90 px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#120d31]/95 backdrop-blur-xl border-t border-[#1e164d] px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom">
         <button
           onClick={() => handleSelectSection('dashboard')}
           className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${

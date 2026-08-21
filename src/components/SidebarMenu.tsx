@@ -119,7 +119,7 @@ export default function SidebarMenu({
     }));
   };
 
-  // Structured menu modules adhering strictly to sequence requested
+  // Structured menu modules adhering strictly to reference design sequence
   const menuStructure = [
     {
       id: 'dashboard',
@@ -131,7 +131,7 @@ export default function SidebarMenu({
     {
       id: 'service_groups',
       label: 'Service Group',
-      icon: FolderTree,
+      icon: Layers,
       badge: categories.length ? `${categories.length}` : null,
       subItems: []
     },
@@ -157,67 +157,42 @@ export default function SidebarMenu({
       subItems: []
     },
     {
-      id: 'invoice',
-      label: 'Invoice',
-      icon: FileText,
-      badge: invoicesCount > 0 ? `${invoicesCount}` : null,
-      subItems: []
-    },
-    {
-      id: 'customers',
-      label: 'Customers',
-      icon: Users,
+      id: 'reports',
+      label: 'Report',
+      icon: BarChart3,
       badge: null,
-      subItems: []
-    },
-    {
-      id: 'employees',
-      label: 'Employees',
-      icon: UserCheck,
-      badge: null,
-      subItems: []
-    },
-    {
-      id: 'teams',
-      label: 'Teams',
-      icon: Users,
-      badge: null,
-      subItems: []
-    },
-    {
-      id: 'inventory',
-      label: 'Inventory',
-      icon: Box,
-      badge: null,
-      subItems: []
-    },
-    {
-      id: 'store',
-      label: 'Product Store',
-      icon: ShoppingCart,
-      badge: null,
-      subItems: []
+      subItems: [
+        { id: 'profit_service', label: 'Profit Per Service (overall profit)', icon: TrendingUp },
+        { id: 'sales', label: 'Sale Report - (day/week/month/year)', icon: DollarSign },
+        { id: 'profit_loss', label: 'Profit Report - (day/week/month/year)', icon: BarChart3 },
+        { id: 'daily', label: 'Paid Report', icon: Clock },
+        { id: 'customer', label: 'Pending Report', icon: FileText },
+      ]
     },
     {
       id: 'settings',
-      label: 'Settings',
+      label: 'Setting',
       icon: Settings,
       badge: null,
       subItems: []
     },
     {
-      id: 'reports',
-      label: 'Reports',
-      icon: BarChart3,
+      id: 'logout',
+      label: 'Logout',
+      icon: LogOut,
       badge: null,
       subItems: []
     }
   ];
 
   const handleParentMenuClick = (mainTab: string, subSection?: string) => {
+    if (mainTab === 'logout') {
+      if (onSignOut) onSignOut();
+      return;
+    }
     setExpandedMenus((prev) => ({
       ...prev,
-      [mainTab]: true
+      [mainTab]: !prev[mainTab]
     }));
     handleSelect(mainTab, subSection || '');
     if (setMobileMenuOpen) {
@@ -238,64 +213,39 @@ export default function SidebarMenu({
       {/* Main ERP Sidebar Container */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 bg-[#0B1120] border-r border-slate-800/80
+          fixed inset-y-0 left-0 z-50 bg-[#120d31] border-r border-[#1e164d]
           flex flex-col justify-between shrink-0 transition-all duration-300 ease-in-out md:static
-          ${isCollapsed ? 'w-20' : 'w-72'}
+          ${isCollapsed ? 'w-16' : 'w-60'}
           ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-          shadow-2xl md:shadow-none
+          shadow-2xl md:shadow-none font-sans
         `}
       >
-        {/* Upper Branding Header */}
+        {/* Upper Menu Area */}
         <div className="flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800/80 bg-[#0F172A]/90 shrink-0">
-            <div className="flex items-center gap-3 overflow-hidden">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#3B82F6] p-0.5 flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20 overflow-hidden">
-                <img
-                  src={studioProfile?.studioLogo || defaultAppLogo}
-                  alt="Logo"
-                  referrerPolicy="no-referrer"
-                  className="h-full w-full rounded-[10px] object-cover bg-black"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = defaultAppLogo;
-                  }}
-                />
-              </div>
-
-              {!isCollapsed && (
-                <div className="min-w-0 flex-1">
-                  <h2 className="font-extrabold text-white text-sm tracking-tight truncate leading-tight">
-                    {studioProfile?.businessName || studioProfile?.studioName || 'LensMaster ERP'}
-                  </h2>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                      Studio & Press
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Desktop toggle collapse / Mobile close */}
-            <div className="flex items-center gap-1 shrink-0">
+          {/* MENU Label Header */}
+          <div className="flex items-center justify-between px-5 py-3 border-b border-[#1e164d] bg-[#100c2a] shrink-0">
+            <span className="text-[11px] font-bold tracking-widest text-[#8c94b2] uppercase">
+              MENU
+            </span>
+            <div className="flex items-center gap-1">
               <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="md:hidden text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+                onClick={() => setMobileMenuOpen && setMobileMenuOpen(false)}
+                className="md:hidden text-slate-400 hover:text-white p-1 rounded hover:bg-white/10 transition"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className="hidden md:flex text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+                className="hidden md:flex text-[#8c94b2] hover:text-white p-1 rounded hover:bg-white/10 transition"
                 title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
               >
-                {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
               </button>
             </div>
           </div>
 
-          {/* ERP Navigation Menu - Scrollable Area */}
-          <nav className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-1.5 custom-scrollbar max-h-[calc(100vh-140px)]">
+          {/* Navigation Items List */}
+          <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2.5 space-y-1 custom-scrollbar max-h-[calc(100vh-100px)]">
             {menuStructure.map((moduleItem) => {
               const Icon = moduleItem.icon;
               const isParentActive = currentTab === moduleItem.id;
@@ -312,19 +262,19 @@ export default function SidebarMenu({
                       handleParentMenuClick(moduleItem.id, moduleItem.subItems[0]?.id);
                     }}
                     className={`
-                      group flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer
-                      transition-all duration-150 text-xs font-bold
+                      group flex items-center justify-between px-3 py-2.5 rounded-md cursor-pointer
+                      transition-all duration-150 text-xs font-medium
                       ${
                         isParentActive
-                          ? 'bg-[#2563EB] text-white shadow-lg shadow-blue-600/25'
-                          : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                          ? 'bg-[#241a54] text-white shadow-xs font-semibold'
+                          : 'text-[#8c94b2] hover:bg-white/5 hover:text-white'
                       }
                     `}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <Icon
-                        className={`h-4 w-4 shrink-0 transition-transform group-hover:scale-110 ${
-                          isParentActive ? 'text-white' : 'text-slate-400 group-hover:text-blue-400'
+                        className={`h-4 w-4 shrink-0 transition-colors ${
+                          isParentActive ? 'text-white' : 'text-[#8c94b2] group-hover:text-white'
                         }`}
                       />
                       {!isCollapsed && (
@@ -333,29 +283,24 @@ export default function SidebarMenu({
                     </div>
 
                     {!isCollapsed && (
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0">
                         {moduleItem.badge && (
                           <span
-                            className={`px-1.5 py-0.5 rounded-md text-[10px] font-extrabold ${
+                            className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
                               isParentActive
                                 ? 'bg-white/20 text-white'
-                                : 'bg-slate-800 text-blue-400 border border-slate-700'
+                                : 'bg-[#1e164d] text-blue-300'
                             }`}
                           >
                             {moduleItem.badge}
                           </span>
                         )}
                         {moduleItem.subItems.length > 0 && (
-                          <button
-                            onClick={(e) => toggleAccordion(moduleItem.id, e)}
-                            className="p-0.5 rounded hover:bg-white/10 transition"
-                          >
-                            <ChevronDown
-                              className={`h-3.5 w-3.5 transition-transform duration-200 ${
-                                isExpanded ? 'rotate-180' : ''
-                              }`}
-                            />
-                          </button>
+                          <ChevronRight
+                            className={`h-3 w-3 text-[#8c94b2] transition-transform duration-200 ${
+                              isExpanded ? 'rotate-90 text-white' : ''
+                            }`}
+                          />
                         )}
                       </div>
                     )}
@@ -369,12 +314,11 @@ export default function SidebarMenu({
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.18, ease: 'easeInOut' }}
+                          transition={{ duration: 0.15, ease: 'easeInOut' }}
                           className="overflow-hidden"
                         >
-                          <div className="pl-6 pr-1 py-1.5 space-y-1 my-0.5 border-l-2 border-slate-800/80 ml-4">
+                          <div className="pl-5 pr-1 py-1 space-y-0.5 my-0.5 border-l border-[#241a54] ml-3">
                             {moduleItem.subItems.map((sub) => {
-                              const SubIcon = sub.icon;
                               const isSubActive =
                                 isParentActive &&
                                 (activeSubSection === sub.id ||
@@ -391,29 +335,16 @@ export default function SidebarMenu({
                                     }
                                   }}
                                   className={`
-                                    w-full flex items-center justify-between px-3 py-2 rounded-lg text-[11px] font-semibold
+                                    w-full flex items-center justify-between px-2.5 py-1.5 rounded text-[11px] font-normal
                                     transition-all duration-150 group/sub text-left
                                     ${
                                       isSubActive
-                                        ? 'bg-blue-500/15 text-blue-400 font-extrabold border-l-2 border-blue-500'
-                                        : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                                        ? 'bg-[#241a54] text-white font-semibold'
+                                        : 'text-[#8c94b2] hover:bg-white/5 hover:text-white'
                                     }
                                   `}
                                 >
-                                  <div className="flex items-center gap-2.5 min-w-0">
-                                    <SubIcon
-                                      className={`h-3.5 w-3.5 shrink-0 ${
-                                        isSubActive
-                                          ? 'text-blue-400'
-                                          : 'text-slate-500 group-hover/sub:text-slate-300'
-                                      }`}
-                                    />
-                                    <span className="truncate">{sub.label}</span>
-                                  </div>
-
-                                  {isSubActive && (
-                                    <div className="h-1.5 w-1.5 rounded-full bg-blue-400 shrink-0" />
-                                  )}
+                                  <span className="truncate">{sub.label}</span>
                                 </button>
                               );
                             })}
@@ -428,34 +359,12 @@ export default function SidebarMenu({
           </nav>
         </div>
 
-        {/* Footer User Profile & Sign Out */}
-        <div className="border-t border-slate-800/80 p-3.5 bg-[#0F172A]/70 shrink-0">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="h-8 w-8 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                {(studioProfile?.ownerName || userEmail || 'O').charAt(0).toUpperCase()}
-              </div>
-              {!isCollapsed && (
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-white truncate">
-                    {studioProfile?.ownerName || 'Studio Owner'}
-                  </p>
-                  <p className="text-[10px] text-slate-400 truncate">
-                    {studioProfile?.email || userEmail}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={onSignOut}
-              className="p-2 rounded-lg text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition shrink-0"
-              title="Sign Out"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+        {/* Footer info in sidebar */}
+        {!isCollapsed && (
+          <div className="p-3 border-t border-[#1e164d] text-center text-[10px] text-[#8c94b2]/60">
+            Dazz Photography System
           </div>
-        </div>
+        )}
       </aside>
     </>
   );

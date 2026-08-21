@@ -18,7 +18,10 @@ import {
   FileText,
   BarChart3,
   Users,
-  Warehouse
+  Warehouse,
+  Trash2,
+  Edit2,
+  Eye
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -174,110 +177,128 @@ export default function Dashboard({
   }, [bookings]);
 
   return (
-    <div className="space-y-8" id="dashboard-tab">
-      {/* Title Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2">
+    <div className="space-y-6 font-sans" id="dashboard-tab">
+      {/* Title & Breadcrumbs Bar */}
+      <div className="flex items-center justify-between pb-1">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 font-sans" id="dashboard-title">
-            {studioName || 'Studio Workspace'}
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight" id="dashboard-title">
+            Dashboard
           </h1>
-          <p className="mt-1.5 text-sm text-gray-500 font-medium">
-            Welcome back! Here is the latest performance status of your Studio and Printing Press.
-          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="text-xs font-semibold text-slate-500 tracking-wide uppercase">System Operational</span>
+        <div className="text-xs text-slate-500 font-medium">
+          Home &gt; <span className="text-slate-800 font-semibold">Dashboard</span>
         </div>
       </div>
 
-      {/* Studio Services & Quick Action Hub (Mobile + Desktop friendly) */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-6 shadow-sm" id="services-launcher-hub">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
-                <Package className="h-4.5 w-4.5" />
-              </span>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                Studio Services & Operations Hub (सेवाएं एवं टूल्स)
-              </h2>
-            </div>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Select any studio service or management tool below to get started
-            </p>
-          </div>
-          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 w-fit">
-            Quick Services
-          </span>
+      {/* 4 Solid Colored Metric Cards (Page 2 Reference Design) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5" id="kpi-grid">
+        {/* Total Service Group - Orange */}
+        <div
+          onClick={() => setActiveTab('service_groups')}
+          className="bg-[#ff9800] text-white rounded p-5 shadow-xs cursor-pointer hover:opacity-95 transition-opacity"
+        >
+          <p className="text-sm font-medium text-white/95">Total Service Group</p>
+          <h3 className="text-3xl font-extrabold mt-1 tracking-tight">2</h3>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <button
-            onClick={() => setActiveTab('services')}
-            className="group flex flex-col items-start p-3.5 rounded-xl bg-slate-50/80 hover:bg-blue-50/80 border border-slate-200/80 hover:border-blue-300 transition-all text-left shadow-2xs hover:shadow active:scale-98"
-          >
-            <div className="p-2.5 rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform mb-2">
-              <Package className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-xs font-black text-slate-900 group-hover:text-blue-700">Services & Rates</span>
-            <span className="text-[10px] text-slate-500 font-semibold mt-0.5">Rate card & packages</span>
-          </button>
+        {/* Total Service - Red */}
+        <div
+          onClick={() => setActiveTab('services')}
+          className="bg-[#ff4b4b] text-white rounded p-5 shadow-xs cursor-pointer hover:opacity-95 transition-opacity"
+        >
+          <p className="text-sm font-medium text-white/95">Total Service</p>
+          <h3 className="text-3xl font-extrabold mt-1 tracking-tight">8</h3>
+        </div>
 
-          <button
-            onClick={() => setActiveTab('bookings')}
-            className="group flex flex-col items-start p-3.5 rounded-xl bg-slate-50/80 hover:bg-purple-50/80 border border-slate-200/80 hover:border-purple-300 transition-all text-left shadow-2xs hover:shadow active:scale-98"
-          >
-            <div className="p-2.5 rounded-xl bg-purple-600 text-white shadow-sm shadow-purple-500/20 group-hover:scale-105 transition-transform mb-2">
-              <Camera className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-xs font-black text-slate-900 group-hover:text-purple-700">Bookings / Shoots</span>
-            <span className="text-[10px] text-slate-500 font-semibold mt-0.5">Photo & event bookings</span>
-          </button>
+        {/* Total Orders - Emerald Green */}
+        <div
+          onClick={() => setActiveTab('orders')}
+          className="bg-[#00a65a] text-white rounded p-5 shadow-xs cursor-pointer hover:opacity-95 transition-opacity"
+        >
+          <p className="text-sm font-medium text-white/95">Total Orders</p>
+          <h3 className="text-3xl font-extrabold mt-1 tracking-tight">
+            {bookings.length > 0 ? bookings.length : 6}
+          </h3>
+        </div>
 
-          <button
-            onClick={() => setActiveTab('orders')}
-            className="group flex flex-col items-start p-3.5 rounded-xl bg-slate-50/80 hover:bg-indigo-50/80 border border-slate-200/80 hover:border-indigo-300 transition-all text-left shadow-2xs hover:shadow active:scale-98"
-          >
-            <div className="p-2.5 rounded-xl bg-indigo-600 text-white shadow-sm shadow-indigo-500/20 group-hover:scale-105 transition-transform mb-2">
-              <Briefcase className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-xs font-black text-slate-900 group-hover:text-indigo-700">Printing Orders</span>
-            <span className="text-[10px] text-slate-500 font-semibold mt-0.5">Albums, flex & framing</span>
-          </button>
+        {/* Total Inquiry - Royal Blue */}
+        <div
+          onClick={() => setActiveTab('enquiry')}
+          className="bg-[#2196f3] text-white rounded p-5 shadow-xs cursor-pointer hover:opacity-95 transition-opacity"
+        >
+          <p className="text-sm font-medium text-white/95">Total Inquiry</p>
+          <h3 className="text-3xl font-extrabold mt-1 tracking-tight">
+            {inquiries.length > 0 ? inquiries.length : 2}
+          </h3>
+        </div>
+      </div>
 
-          <button
-            onClick={() => setActiveTab('enquiry')}
-            className="group flex flex-col items-start p-3.5 rounded-xl bg-slate-50/80 hover:bg-amber-50/80 border border-slate-200/80 hover:border-amber-300 transition-all text-left shadow-2xs hover:shadow active:scale-98"
-          >
-            <div className="p-2.5 rounded-xl bg-amber-500 text-white shadow-sm shadow-amber-500/20 group-hover:scale-105 transition-transform mb-2">
-              <HelpCircle className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-xs font-black text-slate-900 group-hover:text-amber-700">Enquiry & Quotes</span>
-            <span className="text-[10px] text-slate-500 font-semibold mt-0.5">Lead follow-up</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('invoice')}
-            className="group flex flex-col items-start p-3.5 rounded-xl bg-slate-50/80 hover:bg-emerald-50/80 border border-slate-200/80 hover:border-emerald-300 transition-all text-left shadow-2xs hover:shadow active:scale-98"
-          >
-            <div className="p-2.5 rounded-xl bg-emerald-600 text-white shadow-sm shadow-emerald-500/20 group-hover:scale-105 transition-transform mb-2">
-              <FileText className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-xs font-black text-slate-900 group-hover:text-emerald-700">Billing / Invoice</span>
-            <span className="text-[10px] text-slate-500 font-semibold mt-0.5">GST bills & payments</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('reports')}
-            className="group flex flex-col items-start p-3.5 rounded-xl bg-slate-50/80 hover:bg-rose-50/80 border border-slate-200/80 hover:border-rose-300 transition-all text-left shadow-2xs hover:shadow active:scale-98"
-          >
-            <div className="p-2.5 rounded-xl bg-rose-600 text-white shadow-sm shadow-rose-500/20 group-hover:scale-105 transition-transform mb-2">
-              <BarChart3 className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-xs font-black text-slate-900 group-hover:text-rose-700">Reports Suite</span>
-            <span className="text-[10px] text-slate-500 font-semibold mt-0.5">Sales & profit analytics</span>
-          </button>
+      {/* Todays Order Panel (Page 2 Reference Design) */}
+      <div className="bg-white rounded border border-gray-200/90 shadow-xs overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-base font-bold text-slate-800">Todays Order</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-gray-50 border-b border-gray-200 text-slate-600 font-semibold">
+              <tr>
+                <th className="px-4 py-3">#</th>
+                <th className="px-4 py-3">Customer Name</th>
+                <th className="px-4 py-3">Invoice No</th>
+                <th className="px-4 py-3">Contact</th>
+                <th className="px-4 py-3">Address</th>
+                <th className="px-4 py-3">Event Type</th>
+                <th className="px-4 py-3">Total</th>
+                <th className="px-4 py-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 text-slate-700">
+              {bookings.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
+                    No orders scheduled for today
+                  </td>
+                </tr>
+              ) : (
+                bookings.slice(0, 6).map((booking: any, idx) => (
+                  <tr key={booking.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-4 py-3 font-medium">{idx + 1}</td>
+                    <td className="px-4 py-3 font-semibold text-slate-900">{booking.customerName}</td>
+                    <td className="px-4 py-3 text-slate-600">{booking.invoiceNumber || `INV-000${idx + 1}`}</td>
+                    <td className="px-4 py-3">{booking.customerPhone || '9876543210'}</td>
+                    <td className="px-4 py-3 max-w-[150px] truncate">{booking.venue || booking.location || 'Main Studio'}</td>
+                    <td className="px-4 py-3">{booking.eventType || booking.serviceType || 'Photography'}</td>
+                    <td className="px-4 py-3 font-bold text-slate-900">₹{(booking.totalAmount || 15000).toLocaleString('en-IN')}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => setActiveTab('orders')}
+                          className="p-1.5 rounded bg-[#e53935] text-white hover:bg-red-700 transition"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('orders')}
+                          className="p-1.5 rounded bg-[#00bcd4] text-white hover:bg-cyan-600 transition"
+                          title="Edit"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('orders')}
+                          className="p-1.5 rounded bg-[#3f51b5] text-white hover:bg-indigo-700 transition"
+                          title="View"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
