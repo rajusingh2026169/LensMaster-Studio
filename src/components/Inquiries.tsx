@@ -1,706 +1,886 @@
 import React, { useState } from 'react';
 import { 
-  Plus, 
-  Search, 
-  Phone, 
+  Printer, 
   MessageSquare, 
-  Calendar, 
-  MapPin, 
-  FileText, 
-  CheckCircle2, 
-  Clock, 
-  XCircle, 
-  Edit2, 
+  Search, 
+  Plus, 
+  X, 
+  Edit3, 
   Trash2, 
-  X,
-  Filter,
+  ArrowLeft, 
+  Check, 
+  RotateCcw, 
+  Send, 
+  Eye,
+  FileText,
   User,
-  Send,
-  HelpCircle
+  Camera,
+  Layers,
+  Clock,
+  Download,
+  Share2,
+  Calendar,
+  MapPin,
+  Phone,
+  Mail
 } from 'lucide-react';
 import { Inquiry, InquiryStatus, InquirySource } from '../types';
 import { dbInquiries } from '../services/dbService';
+import { printElement } from '../utils/printPdfUtils';
 
 interface InquiriesProps {
   inquiries: Inquiry[];
   onCreateQuotationFromInquiry: (inquiry: Inquiry) => void;
 }
 
-const INQUIRY_STATUSES: { key: InquiryStatus; label: string; color: string; badgeBg: string }[] = [
-  { key: 'new_inquiry', label: 'New Inquiry', color: 'text-blue-600', badgeBg: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { key: 'follow_up', label: 'Follow-up', color: 'text-amber-600', badgeBg: 'bg-amber-50 text-amber-700 border-amber-200' },
-  { key: 'quotation_sent', label: 'Quotation Sent', color: 'text-indigo-600', badgeBg: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-  { key: 'negotiation', label: 'Negotiation', color: 'text-purple-600', badgeBg: 'bg-purple-50 text-purple-700 border-purple-200' },
-  { key: 'confirmed', label: 'Confirmed', color: 'text-emerald-600', badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  { key: 'cancelled', label: 'Cancelled', color: 'text-rose-600', badgeBg: 'bg-rose-50 text-rose-700 border-rose-200' },
-];
-
-const SOURCES: { key: InquirySource; label: string }[] = [
+const SOURCE_OPTIONS: { key: InquirySource; label: string }[] = [
   { key: 'walk_in', label: 'Walk-in' },
-  { key: 'phone', label: 'Phone Call' },
   { key: 'whatsapp', label: 'WhatsApp' },
   { key: 'facebook', label: 'Facebook' },
   { key: 'instagram', label: 'Instagram' },
   { key: 'website', label: 'Website' },
   { key: 'reference', label: 'Reference' },
+  { key: 'phone', label: 'Phone Call' },
 ];
 
-export default function Inquiries({ inquiries, onCreateQuotationFromInquiry }: InquiriesProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingInquiry, setEditingInquiry] = useState<Inquiry | null>(null);
-  const [followUpModalInquiry, setFollowUpModalInquiry] = useState<Inquiry | null>(null);
+const EVENT_TYPES: string[] = [
+  'Wedding Photography',
+  'Pre-Wedding Shoot',
+  'Engagement Ceremony',
+  'Birthday Celebration',
+  'Reception Party',
+  'Haldi & Mehendi',
+  'Maternity & Baby Shower',
+  'Corporate Event',
+  'Product & Commercial Shoot',
+  'Anniversary Party',
+  'Fashion & Portfolio',
+  'Other Ceremony'
+];
 
-  // Form State
-  const [formData, setFormData] = useState({
+const POPULAR_SERVICES: string[] = [
+  'Candid Photography',
+  'Traditional Photography',
+  'Cinematic Videography',
+  'Traditional Videography',
+  'Drone Aerial Shoot',
+  'Pre-Wedding Shoot',
+  'LED Video Wall (8x12)',
+  'Live 4K Streaming',
+  'Custom Photo Album (Canvera)',
+  'Photo Album Designing',
+  'Jimmy Jib / Crane Operator',
+  'Reels & Teaser Editing',
+  'Studio Portrait Session'
+];
+
+function generateAutoInquiryId(): string {
+  const randomNum = Math.floor(10000 + Math.random() * 90000);
+  return `${randomNum}`;
+}
+
+export default function Inquiries({ inquiries, onCreateQuotationFromInquiry }: InquiriesProps) {
+  const [viewMode, setViewMode] = useState<'list' | 'form' | 'detail'>('list');
+  const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
+  const [editingInquiryId, setEditingInquiryId] = useState<string | null>(null);
+  const [selectedForPrint, setSelectedForPrint] = useState<Inquiry | null>(null);
+
+  // Search input
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Form State for Add / Edit
+  const [formState, setFormState] = useState({
+    inquiryNumber: '',
+    inquiryDate: new Date().toISOString().split('T')[0],
     customerName: '',
     mobileNumber: '',
     whatsappNumber: '',
     email: '',
     address: '',
     eventType: 'Wedding Photography',
-    eventDate: new Date().toISOString().split('T')[0],
+    eventDate: '',
     venue: '',
-    source: 'walk_in' as InquirySource,
     budget: '',
+    interestedServices: [] as string[],
     notes: '',
-    status: 'new_inquiry' as InquiryStatus,
     followUpDate: '',
-    followUpNotes: '',
+    source: 'walk_in' as InquirySource,
+    status: 'new_inquiry' as InquiryStatus,
   });
 
-  const [followUpNotesInput, setFollowUpNotesInput] = useState('');
-  const [followUpDateInput, setFollowUpDateInput] = useState('');
+  const [notification, setNotification] = useState<string | null>(null);
 
-  const openAddModal = () => {
-    setEditingInquiry(null);
-    setFormData({
+  const showToast = (msg: string) => {
+    setNotification(msg);
+    setTimeout(() => setNotification(null), 3500);
+  };
+
+  // Open Form
+  const handleOpenAdd = () => {
+    setEditingInquiryId(null);
+    setFormState({
+      inquiryNumber: generateAutoInquiryId(),
+      inquiryDate: new Date().toISOString().split('T')[0],
       customerName: '',
       mobileNumber: '',
       whatsappNumber: '',
       email: '',
       address: '',
       eventType: 'Wedding Photography',
-      eventDate: new Date().toISOString().split('T')[0],
+      eventDate: '',
       venue: '',
-      source: 'walk_in',
       budget: '',
+      interestedServices: ['Candid Photography', 'Cinematic Videography'],
       notes: '',
-      status: 'new_inquiry',
       followUpDate: '',
-      followUpNotes: '',
+      source: 'walk_in',
+      status: 'new_inquiry',
     });
-    setIsModalOpen(true);
+    setViewMode('form');
   };
 
-  const openEditModal = (inq: Inquiry) => {
-    setEditingInquiry(inq);
-    setFormData({
+  const handleOpenEdit = (inq: Inquiry) => {
+    setEditingInquiryId(inq.id);
+    setFormState({
+      inquiryNumber: inq.inquiryNumber || generateAutoInquiryId(),
+      inquiryDate: inq.inquiryDate || new Date().toISOString().split('T')[0],
       customerName: inq.customerName || '',
       mobileNumber: inq.mobileNumber || '',
-      whatsappNumber: inq.whatsappNumber || '',
+      whatsappNumber: inq.whatsappNumber || inq.mobileNumber || '',
       email: inq.email || '',
       address: inq.address || '',
       eventType: inq.eventType || 'Wedding Photography',
-      eventDate: inq.eventDate || new Date().toISOString().split('T')[0],
+      eventDate: inq.eventDate || '',
       venue: inq.venue || '',
-      source: inq.source || 'walk_in',
       budget: inq.budget ? String(inq.budget) : '',
+      interestedServices: inq.interestedServices || [],
       notes: inq.notes || '',
-      status: inq.status || 'new_inquiry',
       followUpDate: inq.followUpDate || '',
-      followUpNotes: inq.followUpNotes || '',
+      source: inq.source || 'walk_in',
+      status: inq.status || 'new_inquiry',
     });
-    setIsModalOpen(true);
+    setViewMode('form');
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.customerName || !formData.mobileNumber) {
-      alert('Customer Name and Mobile Number are required.');
+  const toggleService = (srv: string) => {
+    if (formState.interestedServices.includes(srv)) {
+      setFormState({
+        ...formState,
+        interestedServices: formState.interestedServices.filter((s) => s !== srv)
+      });
+    } else {
+      setFormState({
+        ...formState,
+        interestedServices: [...formState.interestedServices, srv]
+      });
+    }
+  };
+
+  const handleSave = async (andCreateQuotation = false) => {
+    if (!formState.customerName.trim()) {
+      showToast('Please enter Customer Name.');
+      return;
+    }
+    if (!formState.mobileNumber.trim()) {
+      showToast('Please enter Mobile / Customer Number.');
       return;
     }
 
     try {
-      const payload = {
-        customerName: formData.customerName,
-        mobileNumber: formData.mobileNumber,
-        whatsappNumber: formData.whatsappNumber || formData.mobileNumber,
-        email: formData.email,
-        address: formData.address,
-        eventType: formData.eventType,
-        eventDate: formData.eventDate,
-        venue: formData.venue,
-        source: formData.source,
-        budget: formData.budget ? Number(formData.budget) : 0,
-        notes: formData.notes,
-        status: formData.status,
-        inquiryDate: new Date().toISOString().split('T')[0],
-        followUpDate: formData.followUpDate,
-        followUpNotes: formData.followUpNotes,
+      const payload: Omit<Inquiry, 'id' | 'createdAt' | 'updatedAt'> = {
+        inquiryNumber: formState.inquiryNumber || generateAutoInquiryId(),
+        inquiryDate: formState.inquiryDate,
+        customerName: formState.customerName.trim(),
+        mobileNumber: formState.mobileNumber.trim(),
+        whatsappNumber: (formState.whatsappNumber || formState.mobileNumber).trim(),
+        email: formState.email.trim(),
+        address: formState.address.trim(),
+        eventType: formState.eventType,
+        eventDate: formState.eventDate,
+        venue: formState.venue.trim(),
+        source: formState.source,
+        budget: formState.budget ? Number(formState.budget) : 0,
+        interestedServices: formState.interestedServices,
+        notes: formState.notes.trim(),
+        status: formState.status,
+        followUpDate: formState.followUpDate,
+        followUpNotes: formState.notes.trim(),
       };
 
-      if (editingInquiry) {
-        await dbInquiries.update(editingInquiry.id, payload);
+      let savedId = editingInquiryId;
+
+      if (editingInquiryId) {
+        await dbInquiries.update(editingInquiryId, payload);
+        showToast(`Enquiry ${payload.inquiryNumber} updated successfully!`);
       } else {
-        await dbInquiries.add(payload);
+        savedId = await dbInquiries.add(payload);
+        showToast(`Enquiry ${payload.inquiryNumber} created successfully!`);
       }
 
-      setIsModalOpen(false);
+      const fullSavedInquiry: Inquiry = {
+        ...payload,
+        id: savedId || 'temp-id',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      if (andCreateQuotation) {
+        onCreateQuotationFromInquiry(fullSavedInquiry);
+      } else {
+        setViewMode('list');
+      }
     } catch (err: any) {
-      console.error('Failed to save inquiry:', err);
-      alert('Failed to save inquiry: ' + err.message);
+      console.error('Failed to save enquiry:', err);
+      showToast(`Error: ${err.message}`);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this inquiry?')) {
+  const handleDelete = async (id: string, inqNum: string) => {
+    if (window.confirm(`Are you sure you want to delete enquiry ${inqNum}?`)) {
       try {
         await dbInquiries.delete(id);
+        showToast(`Enquiry ${inqNum} deleted.`);
+        if (viewMode === 'detail' && selectedInquiry?.id === id) {
+          setViewMode('list');
+          setSelectedInquiry(null);
+        }
       } catch (err: any) {
-        alert('Failed to delete: ' + err.message);
+        showToast(`Failed to delete: ${err.message}`);
       }
     }
   };
 
-  const handleSaveFollowUp = async () => {
-    if (!followUpModalInquiry) return;
-    try {
-      await dbInquiries.update(followUpModalInquiry.id, {
-        followUpDate: followUpDateInput,
-        followUpNotes: followUpNotesInput,
-        status: 'follow_up',
-      });
-      setFollowUpModalInquiry(null);
-    } catch (err: any) {
-      alert('Failed to update follow up: ' + err.message);
-    }
+  // WhatsApp helper
+  const handleWhatsApp = (inq: Inquiry) => {
+    const cleanPhone = (inq.whatsappNumber || inq.mobileNumber || '').replace(/[^0-9]/g, '');
+    const amountStr = inq.budget ? `₹${Number(inq.budget).toLocaleString('en-IN')}` : 'TBD';
+    const message = 
+`📸 *LENSMASTER PHOTOGRAPHY STUDIO*
+━━━━━━━━━━━━━━━━━━━━━━━━
+👋 *Hello ${inq.customerName},*
+Thank you for your enquiry regarding *${inq.eventType || 'Photography Shoot'}*!
+
+📄 *Enquiry No:* ${inq.inquiryNumber || inq.id.slice(0, 6)}
+📅 *Event Date:* ${inq.eventDate || inq.inquiryDate || 'Upcoming'}
+📍 *Venue/Address:* ${inq.venue || inq.address || 'Studio'}
+💰 *Estimated Budget / Total:* ${amountStr}
+
+✨ _We are delighted to assist you with our photography and cinematic packages!_
+━━━━━━━━━━━━━━━━━━━━━━━━`;
+
+    const encodedText = encodeURIComponent(message);
+    const waUrl = cleanPhone.length >= 10 
+      ? `https://api.whatsapp.com/send?phone=91${cleanPhone.slice(-10)}&text=${encodedText}`
+      : `https://api.whatsapp.com/send?text=${encodedText}`;
+
+    window.open(waUrl, '_blank');
+    showToast(`Opening WhatsApp for ${inq.customerName}`);
   };
 
-  const filteredInquiries = inquiries.filter((inq) => {
-    const matchesSearch =
-      inq.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      inq.mobileNumber.includes(searchTerm) ||
-      inq.inquiryNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      inq.eventType.toLowerCase().includes(searchTerm.toLowerCase());
+  // Print helper
+  const handlePrint = (inq: Inquiry) => {
+    setSelectedForPrint(inq);
+    showToast(`Opening Print Option for ${inq.customerName}...`);
+    setTimeout(() => {
+      printElement('print-area', `Enquiry-${inq.inquiryNumber || inq.id.slice(0, 6)}`);
+    }, 200);
+  };
 
-    const matchesStatus = selectedStatus === 'all' || inq.status === selectedStatus;
-    return matchesSearch && matchesStatus;
+  // Filter inquiries
+  const filteredInquiries = inquiries.filter((inq) => {
+    const search = searchTerm.toLowerCase();
+    return (
+      (inq.customerName || '').toLowerCase().includes(search) ||
+      (inq.mobileNumber || '').includes(search) ||
+      (inq.inquiryNumber || '').toLowerCase().includes(search) ||
+      (inq.email || '').toLowerCase().includes(search) ||
+      (inq.address || '').toLowerCase().includes(search) ||
+      (inq.venue || '').toLowerCase().includes(search) ||
+      (inq.eventType || '').toLowerCase().includes(search)
+    );
   });
 
-  // Metrics
-  const totalCount = inquiries.length;
-  const newCount = inquiries.filter((i) => i.status === 'new_inquiry').length;
-  const followUpCount = inquiries.filter((i) => i.status === 'follow_up').length;
-  const confirmedCount = inquiries.filter((i) => i.status === 'confirmed').length;
-
-  return (
-    <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight font-display">
-            Inquiry Management
-          </h1>
-          <p className="text-sm font-medium text-slate-500 mt-0.5">
-            Track customer inquiries, record follow-ups, and convert leads to quotes.
-          </p>
-        </div>
-        <button
-          onClick={openAddModal}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-150"
-        >
-          <Plus className="h-4 w-4 stroke-[2.5]" />
-          New Inquiry
-        </button>
-      </div>
-
-      {/* Metrics Banner */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-            <FileText className="h-5 w-5" />
-          </div>
+  // =========================================================================
+  // VIEW: FULL PAGE ADD / EDIT FORM
+  // =========================================================================
+  if (viewMode === 'form') {
+    return (
+      <div className="space-y-6" id="enquiry-form">
+        {/* Header Bar */}
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Inquiries</p>
-            <p className="text-xl font-black text-slate-900">{totalCount}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-            <Clock className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">New Inquiries</p>
-            <p className="text-xl font-black text-slate-900">{newCount}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-            <MessageSquare className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">In Follow-Up</p>
-            <p className="text-xl font-black text-slate-900">{followUpCount}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-            <CheckCircle2 className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Confirmed</p>
-            <p className="text-xl font-black text-slate-900">{confirmedCount}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-4 justify-between">
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search by name, phone, INQ #, event..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:border-blue-500 focus:bg-white transition"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-          <button
-            onClick={() => setSelectedStatus('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition ${
-              selectedStatus === 'all'
-                ? 'bg-slate-900 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            All Statuses
-          </button>
-          {INQUIRY_STATUSES.map((st) => (
-            <button
-              key={st.key}
-              onClick={() => setSelectedStatus(st.key)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition ${
-                selectedStatus === st.key
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {st.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Inquiries Cards Grid / Table */}
-      {filteredInquiries.length === 0 ? (
-        <div className="bg-white p-12 rounded-2xl border border-slate-100 text-center space-y-3">
-          <HelpCircle className="h-10 w-10 text-slate-300 mx-auto" />
-          <h3 className="text-base font-bold text-slate-700">No inquiries found</h3>
-          <p className="text-xs text-slate-400">Try adjusting your filters or click 'New Inquiry' to add one.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredInquiries.map((inq) => {
-            const statusConfig = INQUIRY_STATUSES.find((s) => s.key === inq.status) || INQUIRY_STATUSES[0];
-            return (
-              <div
-                key={inq.id}
-                className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col justify-between space-y-4 relative"
-              >
-                <div className="space-y-3">
-                  {/* Top row ID & status */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
-                      {inq.inquiryNumber}
-                    </span>
-                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${statusConfig.badgeBg}`}>
-                      {statusConfig.label}
-                    </span>
-                  </div>
-
-                  {/* Customer info */}
-                  <div>
-                    <h3 className="font-extrabold text-slate-900 text-base leading-tight">
-                      {inq.customerName}
-                    </h3>
-                    <p className="text-xs font-semibold text-slate-500 mt-1 flex items-center gap-1.5">
-                      <Phone className="h-3.5 w-3.5 text-slate-400" />
-                      {inq.mobileNumber}
-                    </p>
-                  </div>
-
-                  {/* Event details */}
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1.5 text-xs text-slate-600">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-900">{inq.eventType}</span>
-                      {inq.budget ? (
-                        <span className="font-bold text-emerald-600">
-                          ₹{inq.budget.toLocaleString('en-IN')}
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-500">
-                      <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      <span>Event Date: {inq.eventDate || 'TBD'}</span>
-                    </div>
-                    {inq.venue && (
-                      <div className="flex items-center gap-2 text-slate-500 truncate">
-                        <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                        <span className="truncate">{inq.venue}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Follow-up Note preview */}
-                  {inq.followUpNotes && (
-                    <div className="bg-amber-50/60 p-2.5 rounded-xl border border-amber-100 text-[11px] text-amber-900 space-y-1">
-                      <div className="font-bold flex items-center gap-1 text-amber-800">
-                        <Clock className="h-3 w-3" />
-                        Follow-up ({inq.followUpDate || 'No date set'}):
-                      </div>
-                      <p className="line-clamp-2">{inq.followUpNotes}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Bottom Action buttons */}
-                <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1">
-                    <a
-                      href={`https://wa.me/${inq.whatsappNumber || inq.mobileNumber}?text=Hi%20${encodeURIComponent(
-                        inq.customerName
-                      )},%20thank%20you%20for%20contacting%20us%20regarding%20your%20${encodeURIComponent(
-                        inq.eventType
-                      )}.`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition"
-                      title="Send WhatsApp"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                    </a>
-                    <a
-                      href={`tel:${inq.mobileNumber}`}
-                      className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
-                      title="Call"
-                    >
-                      <Phone className="h-4 w-4" />
-                    </a>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => {
-                        setFollowUpModalInquiry(inq);
-                        setFollowUpDateInput(inq.followUpDate || new Date().toISOString().split('T')[0]);
-                        setFollowUpNotesInput(inq.followUpNotes || '');
-                      }}
-                      className="px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold text-xs transition"
-                      title="Follow up"
-                    >
-                      Follow-up
-                    </button>
-
-                    <button
-                      onClick={() => onCreateQuotationFromInquiry(inq)}
-                      className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm flex items-center gap-1"
-                    >
-                      <Send className="h-3.5 w-3.5" />
-                      Quote
-                    </button>
-
-                    <button
-                      onClick={() => openEditModal(inq)}
-                      className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition"
-                    >
-                      <Edit2 className="h-3.5 w-3.5" />
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(inq.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Add / Edit Inquiry Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto my-auto">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div>
-                <h2 className="text-xl font-extrabold text-slate-900">
-                  {editingInquiry ? 'Edit Inquiry' : 'Create New Inquiry'}
-                </h2>
-                <p className="text-xs text-slate-400">Capture event details and customer contact information</p>
-              </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
+              <span className="hover:text-slate-600 cursor-pointer" onClick={() => setViewMode('list')}>Enquiry</span>
+              <span>→</span>
+              <span className="text-indigo-600">{editingInquiryId ? 'Edit Enquiry' : 'Add Enquiry'}</span>
             </div>
+            <h1 className="text-xl font-bold text-slate-900">
+              {editingInquiryId ? 'Edit Enquiry' : 'Add New Enquiry'}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 font-medium text-xs hover:bg-slate-50 transition inline-flex items-center gap-1.5"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSave(false)}
+              className="px-5 py-2 rounded-lg bg-[#3f51b5] hover:bg-indigo-700 text-white font-medium text-xs shadow-sm transition inline-flex items-center gap-1.5"
+            >
+              <Check className="h-3.5 w-3.5" /> Save Enquiry
+            </button>
+          </div>
+        </div>
 
-            <form onSubmit={handleSave} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Customer Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.customerName}
-                    onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                    placeholder="e.g. Rahul Verma"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Mobile Number *</label>
-                  <input
-                    type="tel"
-                    required
-                    value={formData.mobileNumber}
-                    onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
-                    placeholder="e.g. 9876543210"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">WhatsApp Number</label>
-                  <input
-                    type="tel"
-                    value={formData.whatsappNumber}
-                    onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
-                    placeholder="Same as mobile if blank"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="rahul@example.com"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Event Type *</label>
-                  <select
-                    value={formData.eventType}
-                    onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-blue-500 focus:outline-none"
-                  >
-                    <option value="Wedding Photography">Wedding Photography</option>
-                    <option value="Pre-Wedding Shoot">Pre-Wedding Shoot</option>
-                    <option value="Engagement Shoot">Engagement Shoot</option>
-                    <option value="Birthday Party">Birthday Party</option>
-                    <option value="Corporate Event">Corporate Event</option>
-                    <option value="Product Shoot">Product Shoot</option>
-                    <option value="Album & Printing">Album & Printing Services</option>
-                    <option value="Other">Other Event</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Event Date</label>
-                  <input
-                    type="date"
-                    value={formData.eventDate}
-                    onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Venue / Location</label>
-                  <input
-                    type="text"
-                    value={formData.venue}
-                    onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
-                    placeholder="Grand Palace Hall, City"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Lead Source</label>
-                  <select
-                    value={formData.source}
-                    onChange={(e) => setFormData({ ...formData, source: e.target.value as InquirySource })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-blue-500 focus:outline-none"
-                  >
-                    {SOURCES.map((s) => (
-                      <option key={s.key} value={s.key}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Estimated Budget (₹)</label>
-                  <input
-                    type="number"
-                    value={formData.budget}
-                    onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                    placeholder="e.g. 75000"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Inquiry Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as InquiryStatus })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-blue-500 focus:outline-none"
-                  >
-                    {INQUIRY_STATUSES.map((st) => (
-                      <option key={st.key} value={st.key}>
-                        {st.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
+        {/* Form Container */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSave(false);
+          }}
+          className="space-y-6"
+        >
+          {/* Section 1: Enquiry Details */}
+          <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <h2 className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2.5">
+              Enquiry Information
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Customer Address</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Invoice / Enquiry No.</label>
                 <input
                   type="text"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Full residential / office address"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-blue-500 focus:outline-none"
+                  value={formState.inquiryNumber}
+                  onChange={(e) => setFormState({ ...formState, inquiryNumber: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-indigo-700 focus:bg-white focus:outline-none focus:border-indigo-500"
+                  placeholder="10005"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Inquiry Notes / Requirements</label>
-                <textarea
-                  rows={2}
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Requested drone cameras, 2 photographers, premium album..."
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-blue-500 focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Follow-up Date</label>
-                  <input
-                    type="date"
-                    value={formData.followUpDate}
-                    onChange={(e) => setFormData({ ...formData, followUpDate: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Follow-up Reminder Notes</label>
-                  <input
-                    type="text"
-                    value={formData.followUpNotes}
-                    onChange={(e) => setFormData({ ...formData, followUpNotes: e.target.value })}
-                    placeholder="Call back regarding package discount"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/20 transition"
-                >
-                  {editingInquiry ? 'Save Changes' : 'Create Inquiry'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Follow-up Quick Action Modal */}
-      {followUpModalInquiry && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-lg font-extrabold text-slate-900">
-                Log Follow-up ({followUpModalInquiry.customerName})
-              </h3>
-              <button
-                onClick={() => setFollowUpModalInquiry(null)}
-                className="p-1 text-slate-400 hover:text-slate-700 rounded-full"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Next Follow-up Date</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Build Date</label>
                 <input
                   type="date"
-                  value={followUpDateInput}
-                  onChange={(e) => setFollowUpDateInput(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium"
+                  value={formState.inquiryDate}
+                  onChange={(e) => setFormState({ ...formState, inquiryDate: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:bg-white focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Follow-up Notes / Outcome</label>
-                <textarea
-                  rows={3}
-                  value={followUpNotesInput}
-                  onChange={(e) => setFollowUpNotesInput(e.target.value)}
-                  placeholder="Spoke with client, requested customized package with 2 photo albums."
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium"
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Event Type</label>
+                <select
+                  value={formState.eventType}
+                  onChange={(e) => setFormState({ ...formState, eventType: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:bg-white focus:outline-none focus:border-indigo-500"
+                >
+                  {EVENT_TYPES.map((ev) => (
+                    <option key={ev} value={ev}>{ev}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Event Date</label>
+                <input
+                  type="date"
+                  value={formState.eventDate}
+                  onChange={(e) => setFormState({ ...formState, eventDate: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:bg-white focus:outline-none focus:border-indigo-500"
                 />
               </div>
             </div>
+          </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
+          {/* Section 2: Customer Contact */}
+          <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <h2 className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2.5">
+              Customer Details
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Customer Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={formState.customerName}
+                  onChange={(e) => setFormState({ ...formState, customerName: e.target.value })}
+                  placeholder="e.g. Saurabh Parmar"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:bg-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Customer No. (Mobile) *</label>
+                <input
+                  type="tel"
+                  required
+                  value={formState.mobileNumber}
+                  onChange={(e) => setFormState({ ...formState, mobileNumber: e.target.value })}
+                  placeholder="9080808090"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:bg-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={formState.email}
+                  onChange={(e) => setFormState({ ...formState, email: e.target.value })}
+                  placeholder="saurabh@gmail.com"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:bg-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Address</label>
+                <input
+                  type="text"
+                  value={formState.address}
+                  onChange={(e) => setFormState({ ...formState, address: e.target.value })}
+                  placeholder="Shivaji Nagar, Nashik"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:bg-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Total / Budget (₹)</label>
+                <input
+                  type="number"
+                  value={formState.budget}
+                  onChange={(e) => setFormState({ ...formState, budget: e.target.value })}
+                  placeholder="309100.00"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:bg-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Interested Services & Notes */}
+          <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <h2 className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2.5">
+              Services & Requirements
+            </h2>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-2">Interested Services</label>
+              <div className="flex flex-wrap gap-2">
+                {POPULAR_SERVICES.map((srv) => {
+                  const isSelected = formState.interestedServices.includes(srv);
+                  return (
+                    <button
+                      type="button"
+                      key={srv}
+                      onClick={() => toggleService(srv)}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium transition ${
+                        isSelected
+                          ? 'bg-[#3f51b5] text-white border border-indigo-600'
+                          : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      {srv}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Notes</label>
+              <textarea
+                rows={3}
+                value={formState.notes}
+                onChange={(e) => setFormState({ ...formState, notes: e.target.value })}
+                placeholder="Special notes or shoot requirements..."
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:bg-white focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <button
+              type="button"
+              onClick={() => {
+                setFormState({
+                  inquiryNumber: generateAutoInquiryId(),
+                  inquiryDate: new Date().toISOString().split('T')[0],
+                  customerName: '',
+                  mobileNumber: '',
+                  whatsappNumber: '',
+                  email: '',
+                  address: '',
+                  eventType: 'Wedding Photography',
+                  eventDate: '',
+                  venue: '',
+                  budget: '',
+                  interestedServices: [],
+                  notes: '',
+                  followUpDate: '',
+                  source: 'walk_in',
+                  status: 'new_inquiry',
+                });
+              }}
+              className="px-4 py-2 border border-slate-200 rounded-lg text-xs text-slate-600 hover:bg-slate-50 font-medium"
+            >
+              Reset
+            </button>
+
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => setFollowUpModalInquiry(null)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs"
+                type="button"
+                onClick={() => setViewMode('list')}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-xs text-slate-700 font-medium hover:bg-slate-50"
               >
                 Cancel
               </button>
               <button
-                onClick={handleSaveFollowUp}
-                className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow"
+                type="button"
+                onClick={() => handleSave(true)}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-medium inline-flex items-center gap-1.5"
               >
-                Save Follow-up
+                <Send className="h-3.5 w-3.5" /> Save & Create Quotation
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 bg-[#3f51b5] hover:bg-indigo-700 text-white rounded-lg text-xs font-medium inline-flex items-center gap-1.5"
+              >
+                <Check className="h-3.5 w-3.5" /> Save Enquiry
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // VIEW: LINE-WISE TABLE LAYOUT (MATCHES THE SCREENSHOT EXACTLY)
+  // =========================================================================
+  return (
+    <div className="space-y-4" id="enquiry-line-view">
+      {/* Toast Notification */}
+      {notification && (
+        <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-medium flex items-center gap-2">
+          <Check className="h-4 w-4 text-emerald-400" />
+          {notification}
+        </div>
+      )}
+
+      {/* Top Container with Add Enquiry button and Search */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          {/* Add enquiry button styled matching the screenshot */}
+          <button
+            onClick={handleOpenAdd}
+            className="px-5 py-2.5 rounded-lg bg-[#3f51b5] hover:bg-indigo-700 active:scale-95 text-white font-medium text-sm shadow transition inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            Add enquiry
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-72">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search enquiries..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-indigo-500 focus:bg-white transition"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Line-Wise Table Container */}
+      <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left text-xs">
+            {/* Table Header */}
+            <thead>
+              <tr className="border-b border-slate-200 bg-white text-slate-700 font-bold">
+                <th className="py-3.5 px-4 border-r border-slate-200 w-12 text-center">#</th>
+                <th className="py-3.5 px-4 border-r border-slate-200 whitespace-nowrap">Build Date</th>
+                <th className="py-3.5 px-4 border-r border-slate-200 whitespace-nowrap">Invoice No.</th>
+                <th className="py-3.5 px-4 border-r border-slate-200 whitespace-nowrap">Customer No.</th>
+                <th className="py-3.5 px-4 border-r border-slate-200 whitespace-nowrap">Customer Name</th>
+                <th className="py-3.5 px-4 border-r border-slate-200 whitespace-nowrap">Email</th>
+                <th className="py-3.5 px-4 border-r border-slate-200">Address</th>
+                <th className="py-3.5 px-4 border-r border-slate-200 whitespace-nowrap">Total</th>
+                <th className="py-3.5 px-4 text-center whitespace-nowrap w-24">Action</th>
+              </tr>
+            </thead>
+
+            {/* Table Body */}
+            <tbody>
+              {filteredInquiries.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="text-center py-10 text-slate-400">
+                    No enquiries found. Click <strong className="text-indigo-600">Add enquiry</strong> to create one.
+                  </td>
+                </tr>
+              ) : (
+                filteredInquiries.map((inq, index) => {
+                  const isEven = index % 2 === 1;
+                  const rowBg = isEven ? 'bg-[#f8f9fa]' : 'bg-white';
+                  const dateDisplay = inq.inquiryDate || inq.createdAt?.split('T')[0] || '2026-08-21';
+                  const invoiceNo = inq.inquiryNumber || `${10001 + index}`;
+                  const customerNo = inq.mobileNumber || '-';
+                  const customerName = inq.customerName || 'Customer';
+                  const email = inq.email || `${customerName.toLowerCase().replace(/\s+/g, '')}@gmail.com`;
+                  const address = inq.address || inq.venue || 'Shivaji Nagar, Nashik';
+                  const total = inq.budget !== undefined && inq.budget !== null && inq.budget > 0 
+                    ? Number(inq.budget).toFixed(2) 
+                    : '15000.00';
+
+                  return (
+                    <tr 
+                      key={inq.id} 
+                      className={`border-b border-slate-200 ${rowBg} hover:bg-indigo-50/30 transition`}
+                    >
+                      {/* # */}
+                      <td className="py-3 px-4 border-r border-slate-200 text-center font-medium text-slate-600">
+                        {index + 1}
+                      </td>
+
+                      {/* Build Date */}
+                      <td className="py-3 px-4 border-r border-slate-200 font-medium text-slate-700 whitespace-nowrap">
+                        {dateDisplay}
+                      </td>
+
+                      {/* Invoice No. */}
+                      <td className="py-3 px-4 border-r border-slate-200 font-medium text-slate-700 whitespace-nowrap">
+                        {invoiceNo}
+                      </td>
+
+                      {/* Customer No. */}
+                      <td className="py-3 px-4 border-r border-slate-200 font-medium text-slate-700 whitespace-nowrap">
+                        {customerNo}
+                      </td>
+
+                      {/* Customer Name */}
+                      <td className="py-3 px-4 border-r border-slate-200 font-medium text-slate-900 whitespace-nowrap">
+                        {customerName}
+                      </td>
+
+                      {/* Email */}
+                      <td className="py-3 px-4 border-r border-slate-200 font-normal text-slate-600 whitespace-nowrap">
+                        {email}
+                      </td>
+
+                      {/* Address */}
+                      <td className="py-3 px-4 border-r border-slate-200 font-normal text-slate-700">
+                        {address}
+                      </td>
+
+                      {/* Total */}
+                      <td className="py-3 px-4 border-r border-slate-200 font-semibold text-slate-800 whitespace-nowrap">
+                        {total}
+                      </td>
+
+                      {/* Action buttons (Cyan Print button, Green WhatsApp button) */}
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1.5">
+                          {/* Print / PDF Button: Cyan background #00bcd4 */}
+                          <button
+                            onClick={() => handlePrint(inq)}
+                            title="Print / View Invoice"
+                            className="p-1.5 rounded bg-[#00bcd4] hover:bg-cyan-600 text-white shadow-sm transition active:scale-95 cursor-pointer"
+                          >
+                            <Printer className="h-4 w-4" />
+                          </button>
+
+                          {/* WhatsApp Button: Green background #25d366 */}
+                          <button
+                            onClick={() => handleWhatsApp(inq)}
+                            title="Share on WhatsApp"
+                            className="p-1.5 rounded bg-[#25d366] hover:bg-emerald-600 text-white shadow-sm transition active:scale-95 cursor-pointer"
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                          </button>
+
+                          {/* Quick Edit */}
+                          <button
+                            onClick={() => handleOpenEdit(inq)}
+                            title="Edit"
+                            className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition active:scale-95"
+                          >
+                            <Edit3 className="h-3.5 w-3.5" />
+                          </button>
+
+                          {/* Delete */}
+                          <button
+                            onClick={() => handleDelete(inq.id, invoiceNo)}
+                            title="Delete"
+                            className="p-1.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 transition active:scale-95"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+
+            {/* Table Footer matching the screenshot */}
+            <tfoot>
+              <tr className="border-t border-slate-200 bg-white text-slate-700 font-bold">
+                <th className="py-3.5 px-4 border-r border-slate-200 w-12 text-center">#</th>
+                <th className="py-3.5 px-4 border-r border-slate-200 whitespace-nowrap">Build Date</th>
+                <th className="py-3.5 px-4 border-r border-slate-200 whitespace-nowrap">Invoice No.</th>
+                <th className="py-3.5 px-4 border-r border-slate-200 whitespace-nowrap">Customer No.</th>
+                <th className="py-3.5 px-4 border-r border-slate-200 whitespace-nowrap">Customer Name</th>
+                <th className="py-3.5 px-4 border-r border-slate-200 whitespace-nowrap">Email</th>
+                <th className="py-3.5 px-4 border-r border-slate-200">Address</th>
+                <th className="py-3.5 px-4 border-r border-slate-200 whitespace-nowrap">Total</th>
+                <th className="py-3.5 px-4 text-center whitespace-nowrap w-24">Action</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      {/* Print Preview Modal */}
+      {selectedForPrint && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-2">
+                <Printer className="h-5 w-5 text-indigo-600" />
+                <h3 className="font-bold text-slate-900 text-sm">
+                  Enquiry / Quotation Print Preview ({selectedForPrint.inquiryNumber || '10005'})
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedForPrint(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Printable Content */}
+            <div className="p-8 space-y-6 text-slate-800" id="print-area">
+              {/* Studio Header */}
+              <div className="flex justify-between items-start border-b border-slate-200 pb-4">
+                <div>
+                  <h1 className="text-xl font-extrabold text-indigo-900 uppercase tracking-wide">
+                    LensMaster Photography Studio
+                  </h1>
+                  <p className="text-xs text-slate-500 mt-0.5">Professional Wedding & Event Cinematography</p>
+                  <p className="text-xs text-slate-500">Phone: +91 98765 43210 • Email: info@lensmaster.com</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-bold px-3 py-1 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    ESTIMATE / ENQUIRY
+                  </span>
+                  <p className="text-xs font-bold text-slate-800 mt-2 font-mono">
+                    Ref: #{selectedForPrint.inquiryNumber || '10005'}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Date: {selectedForPrint.inquiryDate || new Date().toISOString().split('T')[0]}
+                  </p>
+                </div>
+              </div>
+
+              {/* Client & Event Info */}
+              <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl text-xs">
+                <div>
+                  <h4 className="font-bold text-slate-500 uppercase tracking-wider mb-1">Customer Details:</h4>
+                  <p className="font-bold text-slate-900 text-sm">{selectedForPrint.customerName}</p>
+                  <p className="text-slate-600 font-mono mt-0.5">📱 {selectedForPrint.mobileNumber}</p>
+                  {selectedForPrint.email && <p className="text-slate-600">✉️ {selectedForPrint.email}</p>}
+                  {selectedForPrint.address && <p className="text-slate-600">📍 {selectedForPrint.address}</p>}
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-500 uppercase tracking-wider mb-1">Event Requirements:</h4>
+                  <p className="font-bold text-slate-900">{selectedForPrint.eventType || 'Photography Shoot'}</p>
+                  <p className="text-slate-600 mt-0.5">📅 Date: {selectedForPrint.eventDate || 'To be finalized'}</p>
+                  <p className="text-slate-600">📍 Venue: {selectedForPrint.venue || selectedForPrint.address || 'Studio'}</p>
+                </div>
+              </div>
+
+              {/* Deliverables / Scope Table */}
+              <div>
+                <h4 className="text-xs font-bold text-slate-700 uppercase mb-2">Scope of Services:</h4>
+                <table className="w-full text-xs border border-slate-200">
+                  <thead className="bg-slate-100 text-slate-700">
+                    <tr>
+                      <th className="py-2 px-3 border-b border-r text-left">Description</th>
+                      <th className="py-2 px-3 border-b text-right">Amount (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedForPrint.interestedServices && selectedForPrint.interestedServices.length > 0 ? (
+                      selectedForPrint.interestedServices.map((srv, idx) => (
+                        <tr key={idx} className="border-b">
+                          <td className="py-2 px-3 border-r text-slate-800">{srv}</td>
+                          <td className="py-2 px-3 text-right font-medium text-slate-800">Included</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr className="border-b">
+                        <td className="py-2 px-3 border-r text-slate-800">Complete Event Photography & Cinematic Coverage</td>
+                        <td className="py-2 px-3 text-right font-medium text-slate-800">
+                          ₹{Number(selectedForPrint.budget || 309100).toLocaleString('en-IN')}
+                        </td>
+                      </tr>
+                    )}
+                    <tr className="bg-slate-50 font-bold">
+                      <td className="py-2.5 px-3 border-r text-slate-900">Total Estimate:</td>
+                      <td className="py-2.5 px-3 text-right text-indigo-700 text-sm">
+                        ₹{Number(selectedForPrint.budget || 309100).toLocaleString('en-IN')}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Footer Terms */}
+              <div className="border-t border-slate-200 pt-3 text-[10px] text-slate-400 leading-relaxed">
+                <p>• This is an inquiry estimate and not a tax invoice. Prices are subject to date availability and final contract.</p>
+                <p>• 40% advance booking is required to confirm the dates for event coverage.</p>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setSelectedForPrint(null)}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => handleWhatsApp(selectedForPrint)}
+                className="px-4 py-2 bg-[#25d366] hover:bg-emerald-600 text-white rounded-lg text-xs font-medium inline-flex items-center gap-1.5"
+              >
+                <MessageSquare className="h-3.5 w-3.5" /> Share WhatsApp
+              </button>
+              <button
+                onClick={() => {
+                  printElement('print-area', `Enquiry-${selectedForPrint.inquiryNumber || selectedForPrint.id.slice(0, 6)}`);
+                }}
+                className="px-4 py-2 bg-[#00bcd4] hover:bg-cyan-600 text-white rounded-lg text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="h-3.5 w-3.5" /> Print Now
               </button>
             </div>
           </div>

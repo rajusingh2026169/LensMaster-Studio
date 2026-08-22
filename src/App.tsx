@@ -1213,6 +1213,9 @@ export default function App() {
                 customers={customers}
                 teams={teams}
                 employees={employees}
+                invoices={invoices}
+                studioProfile={studioProfile}
+                studioSettings={studioSettings}
                 activeSubSection={activeSubSection}
                 onNewBooking={() => {
                   setPreselectedCustomer(null);

@@ -21,7 +21,9 @@ import {
   Warehouse,
   Trash2,
   Edit2,
-  Eye
+  Eye,
+  Download,
+  Share2
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -270,25 +272,32 @@ export default function Dashboard({
                     <td className="px-4 py-3">{booking.eventType || booking.serviceType || 'Photography'}</td>
                     <td className="px-4 py-3 font-bold text-slate-900">₹{(booking.totalAmount || 15000).toLocaleString('en-IN')}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center justify-center gap-1.5">
+                      <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => setActiveTab('orders')}
-                          className="p-1.5 rounded bg-[#e53935] text-white hover:bg-red-700 transition"
-                          title="Delete"
+                          className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 transition active:scale-95"
+                          title="Print Invoice (बिल प्रिंट करें)"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Printer className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => setActiveTab('orders')}
-                          className="p-1.5 rounded bg-[#00bcd4] text-white hover:bg-cyan-600 transition"
-                          title="Edit"
+                          className="p-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white border border-blue-200 transition active:scale-95"
+                          title="Download PDF (डाउनलोड करें)"
                         >
-                          <Edit2 className="h-3.5 w-3.5" />
+                          <Download className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => setActiveTab('orders')}
-                          className="p-1.5 rounded bg-[#3f51b5] text-white hover:bg-indigo-700 transition"
-                          title="View"
+                          className="p-1.5 rounded-lg bg-green-50 text-green-700 hover:bg-green-600 hover:text-white border border-green-200 transition active:scale-95"
+                          title="Share on WhatsApp (व्हाट्सएप शेयर)"
+                        >
+                          <Share2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('orders')}
+                          className="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-800 hover:text-white border border-slate-200 transition active:scale-95"
+                          title="View / Details"
                         >
                           <Eye className="h-3.5 w-3.5" />
                         </button>

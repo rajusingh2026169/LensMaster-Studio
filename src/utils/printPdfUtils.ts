@@ -288,33 +288,143 @@ export async function downloadElementAsPDF({
 }
 
 /**
- * Triggers standard browser print dialog targeting the specified element.
+ * Triggers standard browser print dialog targeting the specified element using an isolated iframe.
+ * This guarantees the browser print preview renders instantly and cleanly without background UI clutter.
  */
 export function printElement(elementId: string, documentTitle?: string): boolean {
   const element = document.getElementById(elementId);
+  const title = documentTitle || document.title || 'Print Document';
+
   if (!element) {
-    console.error(`Element with id "${elementId}" not found for printing.`);
-    return false;
+    console.warn(`Element with id "${elementId}" not found for printing. Falling back to window.print()`);
+    try {
+      window.print();
+      return true;
+    } catch (err) {
+      console.error('Print failed:', err);
+      return false;
+    }
   }
-
-  // Set printable class on body to ensure @media print targets correctly
-  const originalTitle = document.title;
-  if (documentTitle) {
-    document.title = documentTitle;
-  }
-
-  // Add printing attribute to the element
-  element.setAttribute('data-print-active', 'true');
 
   try {
-    window.print();
+    // Collect all stylesheet tags from the current document
+    let stylesHtml = '';
+    const styleElements = document.querySelectorAll('link[rel="stylesheet"], style');
+    styleElements.forEach((el) => {
+      stylesHtml += el.outerHTML;
+    });
+
+    // Create an invisible iframe for isolated printing
+    const iframe = document.createElement('iframe');
+    iframe.id = 'print-engine-frame';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0px';
+    iframe.style.height = '0px';
+    iframe.style.border = '0';
+    iframe.style.opacity = '0';
+    iframe.style.pointerEvents = 'none';
+    iframe.setAttribute('title', title);
+    document.body.appendChild(iframe);
+
+    const frameDoc = iframe.contentWindow?.document;
+    if (!frameDoc) {
+      // Fallback
+      window.print();
+      return true;
+    }
+
+    const printStyles = `
+      <style>
+        @page {
+          size: A4 portrait;
+          margin: 10mm 12mm;
+        }
+        *, *::before, *::after {
+          box-sizing: border-box;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        html, body {
+          margin: 0 !important;
+          padding: 8px !important;
+          background: #ffffff !important;
+          color: #0f172a !important;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+          width: 100% !important;
+          min-height: 100% !important;
+          overflow: visible !important;
+        }
+        .no-print, button, nav, aside, header, [data-print="false"], .modal-close {
+          display: none !important;
+        }
+        table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+        }
+        tr, .no-break {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+        img {
+          max-width: 100% !important;
+          height: auto !important;
+        }
+        /* Ensure all borders & colors are crisp */
+        .border { border-color: #cbd5e1 !important; }
+        .bg-slate-50 { background-color: #f8fafc !important; }
+        .bg-gray-50 { background-color: #f9fafb !important; }
+      </style>
+    `;
+
+    frameDoc.open();
+    frameDoc.write(`
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="utf-8" />
+          <title>${title}</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          ${stylesHtml}
+          ${printStyles}
+        </head>
+        <body>
+          <div id="print-wrapper" class="print-wrapper">
+            ${element.outerHTML}
+          </div>
+        </body>
+      </html>
+    `);
+    frameDoc.close();
+
+    // Trigger printing once the iframe DOM and resources are ready
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch (err) {
+        console.error('Iframe print error, falling back to window.print()', err);
+        window.print();
+      } finally {
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+        }, 4000);
+      }
+    }, 300);
+
     return true;
   } catch (err) {
-    console.error('Print failed:', err);
-    return false;
-  } finally {
-    element.removeAttribute('data-print-active');
-    document.title = originalTitle;
+    console.error('Print execution failed:', err);
+    try {
+      window.print();
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 

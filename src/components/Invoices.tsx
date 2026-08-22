@@ -13,7 +13,8 @@ import {
   AlertCircle, 
   ChevronRight,
   PlusCircle,
-  Eye
+  Eye,
+  Share2
 } from 'lucide-react';
 import { Customer, Booking, Invoice, InvoiceItem, PaymentStatus, PaymentMethod } from '../types';
 import { dbInvoices } from '../services/dbService';
@@ -362,6 +363,40 @@ export default function Invoices({
     }
   };
 
+  // Share on WhatsApp
+  const handleShareWhatsApp = (invoice: Invoice) => {
+    const customer = customers.find(c => c.id === invoice.customerId);
+    const cleanPhone = (customer?.phone || '').replace(/[^0-9]/g, '');
+    const bName = studioSettings?.businessName || studioProfile?.businessName || studioSettings?.studioName || studioProfile?.studioName || 'Dazz Photography Studio';
+    const upi = studioSettings?.upiId || '';
+    const mobile = studioSettings?.mobileNumber || studioProfile?.mobileNumber || '';
+    const outstanding = invoice.grandTotal - invoice.paidAmount;
+
+    const message = 
+`📸 *${bName.toUpperCase()}*
+🧾 *TAX INVOICE / BILL RECEIPT*
+━━━━━━━━━━━━━━━━━━━━━━━━
+👤 *Client Name:* ${invoice.customerName}
+📄 *Invoice No:* ${invoice.invoiceNumber}
+📅 *Date:* ${invoice.invoiceDate}
+
+💰 *Grand Total:* ₹${invoice.grandTotal.toLocaleString('en-IN')}
+✅ *Paid Amount:* ₹${invoice.paidAmount.toLocaleString('en-IN')}
+⚠️ *Outstanding Balance:* ₹${Math.max(0, outstanding).toLocaleString('en-IN')}
+📊 *Status:* ${invoice.paymentStatus.toUpperCase().replace('_', ' ')}
+
+${upi ? `💳 *Pay via UPI:* ${upi}\n` : ''}${mobile ? `📞 *Call:* ${mobile}\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━
+✨ _Thank you for your business!_`;
+
+    const encodedText = encodeURIComponent(message);
+    const waUrl = cleanPhone.length >= 10 
+      ? `https://api.whatsapp.com/send?phone=91${cleanPhone.slice(-10)}&text=${encodedText}`
+      : `https://api.whatsapp.com/send?text=${encodedText}`;
+
+    window.open(waUrl, '_blank');
+    showSuccess(`Opening WhatsApp to share invoice ${invoice.invoiceNumber}`);
+  };
+
   return (
     <div className="space-y-6" id="invoices-tab">
       {/* Header */}
@@ -459,7 +494,7 @@ export default function Invoices({
                         {/* Print Invoice */}
                         <button
                           onClick={() => handlePrintInvoice(invoice)}
-                          title="Print Invoice"
+                          title="Print Invoice (बिल प्रिंट करें)"
                           className="p-2 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition active:scale-95"
                         >
                           <Printer className="h-4.5 w-4.5" />
@@ -467,10 +502,18 @@ export default function Invoices({
                         {/* Download PDF */}
                         <button
                           onClick={() => handleDownloadPDF(invoice)}
-                          title="Download PDF"
+                          title="Download PDF (पीडीएफ डाउनलोड करें)"
                           className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition active:scale-95"
                         >
                           <Download className="h-4.5 w-4.5" />
+                        </button>
+                        {/* Share on WhatsApp */}
+                        <button
+                          onClick={() => handleShareWhatsApp(invoice)}
+                          title="Share on WhatsApp (व्हाट्सएप शेयर)"
+                          className="p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition active:scale-95"
+                        >
+                          <Share2 className="h-4.5 w-4.5" />
                         </button>
                         {/* Delete Invoice */}
                         <button
@@ -782,6 +825,12 @@ export default function Invoices({
                     className="inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition"
                   >
                     <Download className="mr-1 h-4 w-4" /> Download PDF
+                  </button>
+                  <button
+                    onClick={() => handleShareWhatsApp(selectedInvoiceForPrint)}
+                    className="inline-flex items-center rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 transition"
+                  >
+                    <Share2 className="mr-1 h-4 w-4" /> Share WhatsApp
                   </button>
                   <button
                     onClick={() => setSelectedInvoiceForPrint(null)}

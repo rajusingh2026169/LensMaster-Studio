@@ -208,8 +208,25 @@ export interface InventoryItem {
   updatedAt: string; // ISO String
 }
 
-export type InquirySource = 'walk_in' | 'phone' | 'whatsapp' | 'facebook' | 'instagram' | 'website' | 'reference';
+export type InquirySource = 'walk_in' | 'phone' | 'whatsapp' | 'facebook' | 'instagram' | 'website' | 'reference' | 'Walk-in' | 'WhatsApp' | 'Facebook' | 'Instagram' | 'Website' | 'Reference';
 export type InquiryStatus = 'new_inquiry' | 'follow_up' | 'quotation_sent' | 'negotiation' | 'confirmed' | 'cancelled';
+
+export interface FollowUpLog {
+  id: string;
+  date: string; // YYYY-MM-DD
+  notes: string;
+  status?: InquiryStatus;
+  loggedAt: string; // ISO String
+}
+
+export interface InquiryAttachment {
+  id: string;
+  name: string;
+  url: string;
+  type?: string;
+  size?: string;
+  uploadedAt: string;
+}
 
 export interface Inquiry {
   id: string;
@@ -226,6 +243,9 @@ export interface Inquiry {
   source: InquirySource;
   budget?: number;
   notes?: string;
+  interestedServices?: string[];
+  followUpTimeline?: FollowUpLog[];
+  attachments?: InquiryAttachment[];
   status: InquiryStatus;
   followUpDate?: string; // YYYY-MM-DD
   followUpNotes?: string;
@@ -392,6 +412,7 @@ export interface EmployeeJobAssignment {
 export interface ServiceCategory {
   id: string;
   name: string;
+  status?: 'Active' | 'Inactive';
   description?: string;
   displayOrder: number;
   createdAt: string;
@@ -409,25 +430,31 @@ export interface ServiceVariant {
 
 export interface StudioService {
   id: string;
+  serialNo?: string; // e.g. '000001', '000009'
   name: string;
   categoryId: string;
   categoryName: string;
-  shortDescription: string;
+  serviceGroupId?: string;
+  serviceGroupName?: string;
+  investCost?: number; // Service Invest Cost
+  sellingCost?: number; // Service Selling Cost
+  taxRate?: number; // Tax Rate / GST
+  shortDescription?: string;
   fullDescription?: string;
   thumbnailImage?: string;
   photos?: string[];
   basePrice: number;
-  discount: number;
-  gst: number; // e.g. 0, 5, 12, 18
-  unit: string; // 'Per Day' | 'Per Hour' | 'Per Event' | 'Per Piece' | 'Session' | 'Units' | 'Projects'
-  minQuantity: number;
+  discount?: number;
+  gst?: number; // e.g. 0, 5, 12, 18
+  unit?: string; // 'Per Day' | 'Per Hour' | 'Per Event' | 'Per Piece' | 'Session' | 'Units' | 'Projects'
+  minQuantity?: number;
   maxQuantity?: number;
-  isAvailable: boolean;
-  isFeatured: boolean;
-  popularBadge: boolean;
+  isAvailable?: boolean;
+  isFeatured?: boolean;
+  popularBadge?: boolean;
   serviceColor?: string;
   icon?: string;
-  displayOrder: number;
+  displayOrder?: number;
   status: 'active' | 'archived';
   variants?: ServiceVariant[];
   createdAt: string;

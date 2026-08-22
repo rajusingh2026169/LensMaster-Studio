@@ -70,12 +70,15 @@ export default function Quotations({
   const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   const handlePrint = (q: Quotation) => {
-    const success = printElement('quotation-preview-doc', `Quotation-${q.quotationNumber}`);
-    if (success) {
-      showSuccess(`Printing Quotation #${q.quotationNumber}`);
-    } else {
-      showError('Unable to open print dialog');
-    }
+    setPreviewQuotation(q);
+    setTimeout(() => {
+      const success = printElement('quotation-preview-doc', `Quotation-${q.quotationNumber}`);
+      if (success) {
+        showSuccess(`Printing Quotation #${q.quotationNumber}`);
+      } else {
+        showError('Unable to open print dialog');
+      }
+    }, 150);
   };
 
   const handleDownloadPDF = async (q: Quotation) => {
